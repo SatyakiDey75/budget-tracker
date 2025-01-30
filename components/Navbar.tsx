@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import Logo from "./logo";
+import Logo, { LogoMob } from "./logo";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -52,7 +52,7 @@ function MobileNavbar() {
 
     return (
         <div className="block border-separate md:hidden bg-background">
-            <nav className="container items-center justify-between flex px-8">
+            <nav className="container items-center justify-between flex pl-3 pr-8">
                 <Sheet open={isOpen} onOpenChange={setIsOpen}>
                     <SheetTrigger asChild>
                         <Button variant="ghost" size="icon">
@@ -63,16 +63,24 @@ function MobileNavbar() {
                         <Logo />
                         <div className="flex flex-col gap-1 pt-4">
                             {items.map(item => <NavbarItem 
-                            key={item.label} label={item.label} link={item.link} />)}
+                            key={item.label} label={item.label} link={item.link}
+                            clickCallBack={() => setIsOpen((prev) => !prev )} />)}
                         </div>
                     </SheetContent>
                 </Sheet>
+                <div className="flex h-[80px] min-h-[60px] items-center gap-4">
+                    <LogoMob />
+                </div>
+                <div className="flex items-center gap-2">
+                    <ThemeSwitcherBtn />
+                    <UserButton afterSignOutUrl="/sign-in" />
+                </div>
             </nav>
         </div>
     )
 }
 
-function NavbarItem({label, link}: {label: string, link: string}) {
+function NavbarItem({label, link, clickCallBack}: {label: string, link: string, clickCallBack?: () => void}) {
     const pathName = usePathname();
     const isActive = pathName === link; 
     return (
@@ -81,7 +89,8 @@ function NavbarItem({label, link}: {label: string, link: string}) {
                 buttonVariants({variant: "ghost"}),
                 "w-full justify-between md:justify-center text-lg text-muted-foreground hover:text-foreground font-weight-700",
                 isActive && "text-foreground"
-            )}>{label}</Link>
+                )} onClick={() => { if (clickCallBack) clickCallBack() }}
+            >{label}</Link>
             {
                 isActive && (
                     <div className="absolute -bottom-[2px] left-1/2 hidden h-[2px] w-[80%] -translate-x-1/2 rounded-xl bg-foreground md:block"></div>
