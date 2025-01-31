@@ -59,7 +59,7 @@ export function CurrencyComboBox() {
             Currencies.find((c) => c.value === data.currency) || null
         )
     },
-    onError: (_e) => {
+    onError: () => {
         toast.error('Something went wrong', {
             id: "update-currency",
         });
