@@ -54,7 +54,8 @@ body {
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
   .dark {
-    --background: 240 10% 3.9%;
+    /* --background: 240 10% 3.9%; */
+    --background: 0 0% 0%;
     --foreground: 0 0% 98%;
     --card: 240 10% 3.9%;
     --card-foreground: 0 0% 98%;
@@ -96,4 +97,9 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+.circleOff {
+  width: 48px !important;
+  height: 48px !important;
 }
