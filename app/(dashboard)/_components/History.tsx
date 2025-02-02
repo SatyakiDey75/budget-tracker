@@ -54,7 +54,7 @@ export default function History({ userSettings }: {userSettings: UserSettings}) 
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <SkeletonWrapper isLoading={historyDataQuery.isFetching}>
+                    <SkeletonWrapper isLoading={historyDataQuery.isLoading}>
                         {dataAvailable && (
                             <ResponsiveContainer width="100%" height={300}>
                                 <BarChart height={300} data={historyDataQuery.data} barCategoryGap={5}>

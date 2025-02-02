@@ -81,7 +81,7 @@ export function CurrencyComboBox() {
 
   if (isDesktop) {
     return (
-        <SkeletonWrapper isLoading={userSettings.isFetching}>
+        <SkeletonWrapper isLoading={userSettings.isLoading}>
             <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
                 <Button variant="outline" className="w-full justify-start" disabled={mutation.isPending}>
@@ -97,7 +97,7 @@ export function CurrencyComboBox() {
   }
 
   return (
-    <SkeletonWrapper isLoading={userSettings.isFetching}>
+    <SkeletonWrapper isLoading={userSettings.isLoading}>
         <Drawer open={open} onOpenChange={setOpen}>
         <DrawerTrigger asChild>
             <Button variant="outline" className="w-full justify-start" disabled={mutation.isPending}>

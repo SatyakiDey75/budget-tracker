@@ -34,7 +34,7 @@ export default function StatsCards({ from, to, userSettings }: Props) {
 
     return (
         <div className="relative flex w-full flex-wrap gap-4 md:flex-nowrap">
-            <SkeletonWrapper isLoading={statsQuery.isFetching}>
+            <SkeletonWrapper isLoading={statsQuery.isLoading}>
                 <StatCard 
                     formatter={formatter} 
                     title="Income"
@@ -43,7 +43,7 @@ export default function StatsCards({ from, to, userSettings }: Props) {
                 />
             </SkeletonWrapper>
             
-            <SkeletonWrapper isLoading={statsQuery.isFetching}>
+            <SkeletonWrapper isLoading={statsQuery.isLoading}>
                 <StatCard 
                     formatter={formatter} 
                     title="Expense"
@@ -52,7 +52,7 @@ export default function StatsCards({ from, to, userSettings }: Props) {
                 />
             </SkeletonWrapper>
             
-            <SkeletonWrapper isLoading={statsQuery.isFetching}>
+            <SkeletonWrapper isLoading={statsQuery.isLoading}>
                 <StatCard 
                     formatter={formatter} 
                     title="Balance"

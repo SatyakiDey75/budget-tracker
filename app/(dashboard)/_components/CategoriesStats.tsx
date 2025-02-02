@@ -31,7 +31,7 @@ export default function CategoriesStats({ from, to, userSettings }: Props) {
 
     return (
         <div className="flex w-full flex-wrap md:flex-nowrap gap-4 my-6">
-            <SkeletonWrapper isLoading={statsQuery.isFetching}>
+            <SkeletonWrapper isLoading={statsQuery.isLoading}>
                 <CategoriesCard 
                     formatter={formatter}
                     type="income"
@@ -39,7 +39,7 @@ export default function CategoriesStats({ from, to, userSettings }: Props) {
                 />
             </SkeletonWrapper>
             
-            <SkeletonWrapper isLoading={statsQuery.isFetching}>
+            <SkeletonWrapper isLoading={statsQuery.isLoading}>
                 <CategoriesCard 
                     formatter={formatter}
                     type="expense"
