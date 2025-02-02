@@ -2,7 +2,7 @@
 
 import React from "react";
 import { toast } from "sonner";
-import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { DeleteTransaction } from "../_actions/deleteTransaction";
 
