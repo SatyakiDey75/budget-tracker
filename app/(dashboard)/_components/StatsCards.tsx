@@ -33,7 +33,7 @@ export default function StatsCards({ from, to, userSettings }: Props) {
     const balance = income - expense;
 
     return (
-        <div className="relative flex w-full flex-wrap gap-2 md:flex-nowrap">
+        <div className="relative flex w-full flex-wrap gap-4 md:flex-nowrap">
             <SkeletonWrapper isLoading={statsQuery.isFetching}>
                 <StatCard 
                     formatter={formatter} 
@@ -72,7 +72,7 @@ function StatCard({ title, value, icon, formatter }: { title: string, value: num
     return (
         <Card className="flex h-24 w-full items-center gap-2 p-4">
             {icon}
-            <div className="flex flex-col items-center gap-0">
+            <div className="flex flex-col gap-0 items-start ml-2">
                 <p className="text-muted-foreground">{title}</p>
                 <CountUp
                     preserveValue

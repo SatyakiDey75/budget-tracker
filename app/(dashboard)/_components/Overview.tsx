@@ -7,6 +7,7 @@ import { differenceInBusinessDays, startOfMonth } from "date-fns";
 import React from "react";
 import { toast } from "sonner";
 import StatsCards from "./StatsCards";
+import CategoriesStats from "./CategoriesStats";
 
 export default function Overview({ userSettings }: { userSettings: UserSettings }) {
 
@@ -41,7 +42,9 @@ export default function Overview({ userSettings }: { userSettings: UserSettings 
                     />
                 </div>
             </div>
+            
             <StatsCards userSettings={userSettings} from={dateRange.from} to={dateRange.to} />
+            <CategoriesStats userSettings={userSettings} from={dateRange.from} to={dateRange.to} />
         </div>
     );
 }
