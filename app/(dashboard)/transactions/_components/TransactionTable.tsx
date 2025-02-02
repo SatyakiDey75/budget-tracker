@@ -1,7 +1,6 @@
 "use client";
 
 import { GetTransactionHistoryResponseType } from "@/app/api/transactions-history/route";
-import { DateToUTCDate } from "@/lib/helpers";
 import { useQuery } from "@tanstack/react-query";
 import {
     ColumnDef,

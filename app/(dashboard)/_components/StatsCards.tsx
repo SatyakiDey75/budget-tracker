@@ -3,7 +3,7 @@
 import { GetBalancedStatsResponseType } from "@/app/api/stats/balance/route";
 import SkeletonWrapper from "@/components/SkeletonWrapper";
 import { Card } from "@/components/ui/card";
-import { DateToUTCDate, GetFormatterForCurrency } from "@/lib/helpers";
+import { GetFormatterForCurrency } from "@/lib/helpers";
 import { UserSettings } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import { toDate } from "date-fns";
