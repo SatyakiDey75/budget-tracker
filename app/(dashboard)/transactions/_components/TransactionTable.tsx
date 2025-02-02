@@ -33,7 +33,6 @@ import { download, generateCsv, mkConfig } from "export-to-csv";
 import { DownloadIcon, MoreHorizontal, TrashIcon } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import DeleteTransactionDialog from "./DeleteTransactionDialog";
-import { toast } from "sonner";
 
 interface Props {
     from: Date;
@@ -42,7 +41,7 @@ interface Props {
 
 type TransactionHistoryRow = GetTransactionHistoryResponseType[0];
 
-const emptyData: TransactionHistoryRow[] = [];
+const emptyData: any[] = [];
 
 const columns: ColumnDef<TransactionHistoryRow>[] = [
     {
@@ -132,16 +131,8 @@ export default function TransactionTable({ from, to }: Props) {
         queryFn: () => fetch(`/api/transactions-history?from=${DateToUTCDate(from)}&to=${DateToUTCDate(to)}`).then((res) => res.json()),
     });
 
-    const handleExportCSV = (data: { category: string; categoryIcon: string; description: string; type: string; amount: number; formattedAmount: string; date: Date; }[]) => {
-        const csvData = data.map(item => ({
-            ...item,
-            date: item.date.toString(),
-        }));
-        if (!csvData.length) {
-            toast.error("No data to export", { id: "export-csv" });
-            return;
-        };
-        const csv = generateCsv(csvConfig)(csvData);
+    const handleExportCSV = (data: any[]) => {
+        const csv = generateCsv(csvConfig)(data);
         download(csvConfig)(csv);
     };
 
