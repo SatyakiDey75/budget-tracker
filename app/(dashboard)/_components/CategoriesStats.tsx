@@ -9,6 +9,7 @@ import { DateToUTCDate, GetFormatterForCurrency } from "@/lib/helpers";
 import { TransactionType } from "@/lib/types";
 import { UserSettings } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
+import { toDate } from "date-fns";
 import React, { useMemo } from "react";
 
 interface Props {
@@ -22,7 +23,7 @@ export default function CategoriesStats({ from, to, userSettings }: Props) {
 
     const statsQuery = useQuery<GetCategoryStatsResponseType>({
         queryKey: ["overview", "stats", "categories", from, to],
-        queryFn: () => fetch(`/api/stats/categories?from=${DateToUTCDate(from)}&to=${DateToUTCDate(to)}`).then((res) => res.json()),
+        queryFn: () => fetch(`/api/stats/categories?from=${toDate(from)}&to=${toDate(to)}`).then((res) => res.json()),
     });
 
     const formatter = useMemo(() => {

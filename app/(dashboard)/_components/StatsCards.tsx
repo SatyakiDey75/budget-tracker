@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { DateToUTCDate, GetFormatterForCurrency } from "@/lib/helpers";
 import { UserSettings } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
+import { toDate } from "date-fns";
 import { TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import React, { useCallback, useMemo } from "react";
 import CountUp from "react-countup";
@@ -20,7 +21,7 @@ export default function StatsCards({ from, to, userSettings }: Props) {
 
     const statsQuery = useQuery<GetBalancedStatsResponseType>({
         queryKey: ["overview", "stats", from, to],
-        queryFn: () => fetch(`/api/stats/balance?from=${DateToUTCDate(from)}&to=${DateToUTCDate(to)}`).then((res) => res.json()),
+        queryFn: () => fetch(`/api/stats/balance?from=${toDate(from)}&to=${toDate(to)}`).then((res) => res.json()),
     });
 
     const formatter = useMemo(() => {

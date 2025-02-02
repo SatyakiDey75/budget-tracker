@@ -33,6 +33,7 @@ import { download, generateCsv, mkConfig } from "export-to-csv";
 import { DownloadIcon, MoreHorizontal, TrashIcon } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import DeleteTransactionDialog from "./DeleteTransactionDialog";
+import { toDate } from "date-fns";
 
 interface Props {
     from: Date;
@@ -128,7 +129,7 @@ export default function TransactionTable({ from, to }: Props) {
 
     const history = useQuery<GetTransactionHistoryResponseType>({
         queryKey: ["transactions", "history", from, to],
-        queryFn: () => fetch(`/api/transactions-history?from=${DateToUTCDate(from)}&to=${DateToUTCDate(to)}`).then((res) => res.json()),
+        queryFn: () => fetch(`/api/transactions-history?from=${toDate(from)}&to=${toDate(to)}`).then((res) => res.json()),
     });
 
     const handleExportCSV = (data: any[]) => {
