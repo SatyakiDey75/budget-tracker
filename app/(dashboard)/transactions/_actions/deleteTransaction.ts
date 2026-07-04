@@ -21,17 +21,12 @@ export async function DeleteTransaction(id: string) {
         throw new Error("Transaction not found");
     }
 
-    await prisma.$transaction([
-        // Delete transaction from db
-        prisma.transaction.delete({
-            where: {
-                id,
-                userId: user.id,
-            },
-        }),
+    await prisma.$transaction(async (tx) => {
+        await tx.transaction.delete({
+            where: { id, userId: user.id },
+        });
 
-        // update month history
-        prisma.monthHistory.update({
+        await tx.monthHistory.update({
             where: {
                 day_month_year_userId: {
                     userId: user.id,
@@ -41,19 +36,12 @@ export async function DeleteTransaction(id: string) {
                 },
             },
             data: {
-                ...(transaction.type === "expense" && {
-                    expense: {
-                        decrement: transaction.amount,
-                    },
-                }),
-                ...(transaction.type === "income" && {
-                    income: {
-                        decrement: transaction.amount,
-                    },
-                }),
+                ...(transaction.type === "expense" && { expense: { decrement: transaction.amount } }),
+                ...(transaction.type === "income" && { income: { decrement: transaction.amount } }),
             },
-        }),
-        prisma.yearHistory.update({
+        });
+
+        await tx.yearHistory.update({
             where: {
                 month_year_userId: {
                     userId: user.id,
@@ -62,17 +50,20 @@ export async function DeleteTransaction(id: string) {
                 },
             },
             data: {
-                ...(transaction.type === "expense" && {
-                    expense: {
-                        decrement: transaction.amount,
-                    },
-                }),
-                ...(transaction.type === "income" && {
-                    income: {
-                        decrement: transaction.amount,
-                    },
-                }),
+                ...(transaction.type === "expense" && { expense: { decrement: transaction.amount } }),
+                ...(transaction.type === "income" && { income: { decrement: transaction.amount } }),
             },
-        }),
-    ])
+        });
+
+        if (transaction.bankId) {
+            await tx.bank.update({
+                where: { id: transaction.bankId, userId: user.id },
+                data: {
+                    balance: {
+                        increment: transaction.type === "income" ? -transaction.amount : transaction.amount,
+                    },
+                },
+            });
+        }
+    });
 }

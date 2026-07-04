@@ -37,6 +37,24 @@ model Transaction {
 
   category     String
   categoryIcon String
+
+  bankId      String?  @db.ObjectId
+  bankName    String?
+  accountName String?
+}
+
+model Bank {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId      String
+  bankName    String
+  branch      String
+  accountName String
+  balance     Float    @default(0)
+
+  @@unique([userId, bankName, accountName])
 }
 
 model MonthHistory {

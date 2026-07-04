@@ -58,6 +58,19 @@ const columns: ColumnDef<TransactionHistoryRow>[] = [
         </div>,
     },
     {
+        accessorKey: "bankName",
+        header: ({ column }) => (
+            <DataTableColumnHeader column={column} title="Bank" />
+        ),
+        cell: ({ row }) => (
+            <div className="text-muted-foreground">
+                {row.original.bankName
+                    ? `${row.original.bankName} – ${row.original.accountName}`
+                    : "—"}
+            </div>
+        ),
+    },
+    {
         accessorKey: "description",
         header: ({ column }) => (
             <DataTableColumnHeader column={column} title="Description" />
@@ -198,6 +211,9 @@ export default function TransactionTable({ from, to }: Props) {
                             category: row.original.category,
                             categoryIcon: row.original.categoryIcon,
                             description: row.original.description,
+                            bank: row.original.bankName
+                                ? `${row.original.bankName} – ${row.original.accountName}`
+                                : "",
                             type: row.original.type,
                             amount: row.original.amount,
                             formattedAmount: row.original.formattedAmount,

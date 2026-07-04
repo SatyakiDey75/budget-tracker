@@ -5,20 +5,32 @@ import SkeletonWrapper from "@/components/SkeletonWrapper";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TransactionType } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
-import { PlusSquare, TrashIcon, TrendingDown, TrendingUp } from "lucide-react";
+import { Landmark, PlusSquare, TrashIcon, TrendingDown, TrendingUp } from "lucide-react";
 import React from "react";
 import CreateCategoryDialog from "../_components/CreateCategoryDialog";
+import CreateBankDialog from "../_components/CreateBankDialog";
+import BankDetailsDialog from "../_components/BankDetailsDialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { Category } from "@prisma/client";
 import DeleteCategoryDialog from "../_components/DeleteCategoryDialog";
+import { getBankLogo } from "@/lib/banks";
+import { GetFormatterForCurrency } from "@/lib/helpers";
+
+interface BankRecord {
+    id: string;
+    bankName: string;
+    branch: string;
+    accountName: string;
+    balance: number;
+}
 
 export default function page() {
     return (
         <>
             <div className="border-b bg-card p-8">
-                <div className="container flex flex-col items-start justify-between gap-2">
+                <div className="flex flex-col items-start justify-between gap-2">
                     <p className="text-3xl font-bold">Manage</p>
                     <p className="text-muted-foreground">
                         Manage your account settings and categories
@@ -26,7 +38,7 @@ export default function page() {
                 </div>
             </div>
 
-            <div className="container flex flex-col gap-4 p-4">
+            <div className="flex flex-col gap-4 p-4">
                 <Card>
                     <CardHeader>
                         <CardTitle>Currency</CardTitle>
@@ -36,8 +48,99 @@ export default function page() {
                         <CurrencyComboBox />
                     </CardContent>
                 </Card>
+                <BankList />
                 <CategoryList type="income" />
                 <CategoryList type="expense" />
+            </div>
+        </>
+    );
+}
+
+function BankList() {
+    const banksQuery = useQuery<BankRecord[]>({
+        queryKey: ["banks"],
+        queryFn: () => fetch("/api/banks").then((res) => res.json()),
+    });
+
+    const settingsQuery = useQuery({
+        queryKey: ["user-settings"],
+        queryFn: () => fetch("/api/user-settings").then((res) => res.json()),
+    });
+
+    const formatter = settingsQuery.data?.currency
+        ? GetFormatterForCurrency(settingsQuery.data.currency)
+        : null;
+
+    const dataAvailable = banksQuery.data && banksQuery.data.length > 0;
+
+    return (
+        <SkeletonWrapper isLoading={banksQuery.isLoading}>
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                            <Landmark className="h-12 w-12 items-center rounded-lg bg-blue-400/10 p-2 text-blue-500" />
+                            <div className="ml-2">
+                                Banks
+                                <div className="text-sm font-normal text-muted-foreground">
+                                    Your linked bank accounts
+                                </div>
+                            </div>
+                        </div>
+                        <CreateBankDialog
+                            trigger={
+                                <Button className="gap-2 text-sm">
+                                    <PlusSquare className="h-4 w-4" />
+                                    Add Bank
+                                </Button>
+                            }
+                        />
+                    </CardTitle>
+                </CardHeader>
+
+                <Separator />
+
+                {!dataAvailable && (
+                    <div className="flex h-40 w-full items-center flex-col justify-center">
+                        <p>No bank accounts yet</p>
+                        <p className="text-sm text-muted-foreground">Add one to get started</p>
+                    </div>
+                )}
+
+                {dataAvailable && (
+                    <div className="grid grid-flow-row gap-4 p-6 sm:grid-flow-row sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                        {banksQuery.data.map((bank) => !bank.bankName.includes('Credit Card') && (
+                            <BankCard key={bank.id} bank={bank} formatter={formatter} />
+                        ))}
+                    </div>
+                )}
+            </Card>
+        </SkeletonWrapper>
+    );
+}
+
+function BankCard({ bank, formatter }: { bank: BankRecord; formatter: Intl.NumberFormat | null }) {
+    const [open, setOpen] = React.useState(false);
+
+    return (
+        <>
+            <BankDetailsDialog bank={bank} open={open} setOpen={setOpen} />
+            <div
+                className="flex border-separate flex-col justify-between rounded-md border shadow-md shadow-black/[0.1] dark:shadow-white/[0.1] cursor-pointer hover:bg-muted/40 transition-colors"
+                onClick={() => setOpen(true)}
+            >
+                <div className="flex flex-col items-center gap-2 p-4">
+                    <img
+                        src={getBankLogo(bank.bankName)}
+                        alt={bank.bankName}
+                        className="h-12 w-12 object-contain rounded-md"
+                    />
+                    <span className="font-medium text-sm text-center">{bank.bankName}</span>
+                    <span className="text-xs text-muted-foreground text-center">{bank.accountName}</span>
+                    <span className="text-sm font-semibold">
+                        {formatter ? formatter.format(bank.balance) : bank.balance.toLocaleString()}
+                    </span>
+                </div>
             </div>
         </>
     );
@@ -62,7 +165,7 @@ function CategoryList({ type }: { type: TransactionType }) {
                             ) : (
                                 <TrendingDown className="h-12 w-12 items-center rounded-lg bg-rose-400/10 p-2 text-rose-500" />
                             )}
-                            
+
                             <div className="ml-2">
                                 {type === "income" ? "Income" : "Expense"} categories
                                 <div className="text-sm font-normal text-muted-foreground">
@@ -70,39 +173,39 @@ function CategoryList({ type }: { type: TransactionType }) {
                                 </div>
                             </div>
                         </div>
-                        <CreateCategoryDialog 
-                            type={type} 
+                        <CreateCategoryDialog
+                            type={type}
                             successCallback={() => categoriesQuery.refetch}
                             trigger={
                                 <Button className="gap-2 text-sm">
                                     <PlusSquare className="h-4 w-4" />
                                     Create Category
                                 </Button>
-                            }    
+                            }
                         />
                     </CardTitle>
                 </CardHeader>
 
                 <Separator />
 
-                { !dataAvailable && (
-                        <div className="flex h-40 w-full items-center flex-col justify-center">
-                            <p>
-                                No <span className={cn(
-                                    "m-1",
-                                    type === "income" ? "text-emerald-500" : "text-rose-500"
-                                )}>{type}</span>
-                                categories yet
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                                Create one to get started
-                            </p>
-                        </div>
+                {!dataAvailable && (
+                    <div className="flex h-40 w-full items-center flex-col justify-center">
+                        <p>
+                            No <span className={cn(
+                                "m-1",
+                                type === "income" ? "text-emerald-500" : "text-rose-500"
+                            )}>{type}</span>
+                            categories yet
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                            Create one to get started
+                        </p>
+                    </div>
                 )}
 
-                { dataAvailable && (
+                {dataAvailable && (
                     <div className="grid grid-flow-row gap-4 p-6 sm:grid-flow-row sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                        { categoriesQuery.data.map((category: Category) => (
+                        {categoriesQuery.data.map((category: Category) => (
                             <CategoryCard category={category} key={category.name} />
                         ))}
                     </div>
@@ -119,16 +222,16 @@ function CategoryCard({ category }: { category: Category }) {
                 <span className="text-3xl" role="image">{category.icon}</span>
                 <span>{category.name}</span>
             </div>
-            <DeleteCategoryDialog 
-                category={category} 
+            <DeleteCategoryDialog
+                category={category}
                 trigger={
-                    <Button 
+                    <Button
                         className="flex w-full border-separate items-center gap-2 rounded-t-none text-muted-foreground hover:bg-rose-500/20" variant={"secondary"}
                     >
                         <TrashIcon className="h-4 w-4" />
                         Remove
                     </Button>
-                } 
+                }
             />
         </div>
     )

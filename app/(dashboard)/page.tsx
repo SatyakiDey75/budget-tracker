@@ -6,6 +6,7 @@ import React from "react";
 import CreateTransactionDialog from "./_components/CreateTransactionDialog";
 import Overview from "./_components/Overview";
 import History from "./_components/History";
+import BankBalanceHistory from "./_components/BankBalanceHistory";
 
 export default async function page() {
     const user = await currentUser();
@@ -26,7 +27,7 @@ export default async function page() {
     return (
         <div className="h-full bg-background">
             <div className="border-b bg-card">
-                <div className="container flex flex-wrap items-center justify-between gap-6 p-8">
+                <div className="flex flex-wrap items-center justify-between gap-6 p-8">
                     <p className="text-3xl font-bold">
                         Hello, {user.firstName}! 👋
                     </p>
@@ -42,6 +43,7 @@ export default async function page() {
             </div>
             <Overview userSettings={userSettings} />
             <History userSettings={userSettings} />
+            <BankBalanceHistory userSettings={userSettings} />
         </div>
     );
 }

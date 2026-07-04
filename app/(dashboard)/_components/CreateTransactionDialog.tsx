@@ -10,6 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import CategoryPicker from "./CategoryPicker";
+import BankPicker from "./BankPicker";
 import { Popover, PopoverTrigger } from "@radix-ui/react-popover";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -42,6 +43,10 @@ export default function CreateTransactionDialog({ trigger, type }: Props) {
         form.setValue("category", value);
     }, [form]);
 
+    const handleBankChange = useCallback((value: string | undefined) => {
+        form.setValue("bankId", value);
+    }, [form]);
+
     const queryClient = useQueryClient();
 
     const { mutate, isPending } = useMutation({
@@ -57,6 +62,7 @@ export default function CreateTransactionDialog({ trigger, type }: Props) {
                 amount: 0,
                 date: new Date(),
                 category: undefined,
+                bankId: undefined,
             });
 
             // after creating a transaction, we need to invalidate the overview query which will refetch the data in the dashboard
@@ -141,9 +147,9 @@ export default function CreateTransactionDialog({ trigger, type }: Props) {
                                             Select a category for this transaction
                                         </FormDescription>
                                     </FormItem>
-                                )}  
+                                )}
                             />
-                            
+
                             <FormField
                                 control={form.control}
                                 name="date"
@@ -184,9 +190,25 @@ export default function CreateTransactionDialog({ trigger, type }: Props) {
                                         </FormDescription>
                                         <FormMessage />
                                     </FormItem>
-                                )}  
+                                )}
                             />
                         </div>
+
+                        <FormField
+                            control={form.control}
+                            name="bankId"
+                            render={({}) => (
+                                <FormItem className="flex flex-col">
+                                    <FormLabel>Bank <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
+                                    <FormControl>
+                                        <BankPicker ttype={type} onChange={handleBankChange} className="w-full" />
+                                    </FormControl>
+                                    <FormDescription>
+                                        Select a bank account to update its balance
+                                    </FormDescription>
+                                </FormItem>
+                            )}
+                        />
                     </form>
                 </Form>
                 <DialogFooter>

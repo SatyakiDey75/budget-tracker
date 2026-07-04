@@ -16,7 +16,8 @@ export async function CreateTransaction(form: CreateTransactionSchemaType) {
         redirect("/sign-in");
     }
 
-    const { amount, category, date, description, type } = parsedBody.data;
+    const { amount, category, date, description, type, bankId } = parsedBody.data;
+
     const categoryRow = await prisma.category.findFirst({
         where: {
             userId: user.id,
@@ -28,10 +29,16 @@ export async function CreateTransaction(form: CreateTransactionSchemaType) {
         throw new Error("Category not found");
     }
 
-    await prisma.$transaction([
-        
-        // create user transaction
-        prisma.transaction.create({
+    const bankRow = bankId
+        ? await prisma.bank.findFirst({ where: { id: bankId, userId: user.id } })
+        : null;
+
+    if (bankId && !bankRow) {
+        throw new Error("Bank not found");
+    }
+
+    await prisma.$transaction(async (tx) => {
+        await tx.transaction.create({
             data: {
                 userId: user.id,
                 amount,
@@ -40,11 +47,13 @@ export async function CreateTransaction(form: CreateTransactionSchemaType) {
                 type,
                 category: categoryRow.name,
                 categoryIcon: categoryRow.icon,
+                bankId: bankRow?.id,
+                bankName: bankRow?.bankName,
+                accountName: bankRow?.accountName,
             },
-        }),
+        });
 
-        // update month aggregate table
-        prisma.monthHistory.upsert({
+        await tx.monthHistory.upsert({
             where: {
                 day_month_year_userId: {
                     userId: user.id,
@@ -62,17 +71,12 @@ export async function CreateTransaction(form: CreateTransactionSchemaType) {
                 income: type === "income" ? amount : 0,
             },
             update: {
-                expense: {
-                    increment: type === "expense" ? amount : 0,
-                },
-                income: {
-                    increment: type === "income" ? amount : 0,
-                },
-            }
-        }),
+                expense: { increment: type === "expense" ? amount : 0 },
+                income: { increment: type === "income" ? amount : 0 },
+            },
+        });
 
-        // update year aggregate table
-        prisma.yearHistory.upsert({
+        await tx.yearHistory.upsert({
             where: {
                 month_year_userId: {
                     userId: user.id,
@@ -88,13 +92,18 @@ export async function CreateTransaction(form: CreateTransactionSchemaType) {
                 income: type === "income" ? amount : 0,
             },
             update: {
-                expense: {
-                    increment: type === "expense" ? amount : 0,
+                expense: { increment: type === "expense" ? amount : 0 },
+                income: { increment: type === "income" ? amount : 0 },
+            },
+        });
+
+        if (bankRow) {
+            await tx.bank.update({
+                where: { id: bankRow.id, userId: user.id },
+                data: {
+                    balance: { increment: type === "income" ? amount : -amount },
                 },
-                income: {
-                    increment: type === "income" ? amount : 0,
-                },
-            }
-        })
-    ]);
+            });
+        }
+    });
 }

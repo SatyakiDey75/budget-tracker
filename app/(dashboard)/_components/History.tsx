@@ -34,8 +34,8 @@ export default function History({ userSettings }: {userSettings: UserSettings}) 
     const dataAvailable = historyDataQuery.data && historyDataQuery.data.length > 0;
 
     return (
-        <div className="container pb-8 px-8">
-            <h2 className="mt-12 text-3xl font-bold">History</h2>
+        <div className="pb-8 px-8">
+            <h2 className="mt-12 text-3xl font-bold">Cashflow</h2>
             <Card className="col-span-12 mt-2 w-full">
                 <CardHeader className="gap-2">
                     <CardTitle className="grid grid-flow-row justify-between gap-2 md:grid-flow-col">

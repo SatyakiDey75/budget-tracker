@@ -16,7 +16,7 @@ export default function TransactionsPage() {
     return (
         <>
             <div className="border-b bg-card">
-                <div className="container flex flex-wrap items-center justify-between p-8 gap-6">
+                <div className="flex flex-wrap items-center justify-between p-8 gap-6">
                     <div>
                         <p className="text-3xl font-bold">Transactions History</p>
                     </div>
@@ -40,7 +40,7 @@ export default function TransactionsPage() {
                 </div>
             </div>
 
-            <div className="container px-8 py-2">
+            <div className="px-8 py-2">
                 <TransactionTable from={dateRange.from} to={dateRange.to} />
             </div>
         </>
