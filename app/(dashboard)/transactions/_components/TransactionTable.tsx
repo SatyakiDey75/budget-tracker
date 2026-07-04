@@ -60,8 +60,14 @@ const columns: ColumnDef<TransactionHistoryRow>[] = [
     {
         accessorKey: "bankName",
         header: ({ column }) => (
-            <DataTableColumnHeader column={column} title="Bank" />
+            <DataTableColumnHeader column={column} title="Source" />
         ),
+        filterFn: (row, _id, value) => {
+            const display = row.original.bankName
+                ? `${row.original.bankName} – ${row.original.accountName}`
+                : "—";
+            return value.includes(display);
+        },
         cell: ({ row }) => (
             <div className="text-muted-foreground">
                 {row.original.bankName
@@ -181,6 +187,18 @@ export default function TransactionTable({ from, to }: Props) {
         return Array.from(uniqueCategories);
     }, [history.data]);
 
+    const sourceOptions = useMemo(() => {
+        const seen = new Map<string, { value: string; label: string }>();
+        history.data?.forEach((transaction) => {
+            if (!transaction.bankName) return;
+            const display = `${transaction.bankName} – ${transaction.accountName}`;
+            if (!seen.has(display)) {
+                seen.set(display, { value: display, label: display });
+            }
+        });
+        return Array.from(seen.values());
+    }, [history.data]);
+
     return (
         <div className="w-full">
             <div className="flex flex-wrap items-center justify-between gap-2 py-4">
@@ -200,7 +218,15 @@ export default function TransactionTable({ from, to }: Props) {
                                 { value: "income", label: "Income" },
                                 { value: "expense", label: "Expense" },
                             ]}
-                            column={table.getColumn("type")} 
+                            column={table.getColumn("type")}
+                        />
+                    )}
+
+                    { table.getColumn("bankName") && sourceOptions.length > 0 && (
+                        <DataTableFacetedFilter
+                            title="Source"
+                            options={sourceOptions}
+                            column={table.getColumn("bankName")}
                         />
                     )}
                 </div>

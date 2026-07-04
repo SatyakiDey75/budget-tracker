@@ -55,7 +55,8 @@ export async function DeleteTransaction(id: string) {
             },
         });
 
-        if (transaction.bankId) {
+        if (transaction.bankId && transaction.bankName &&
+            !transaction.bankName.toLowerCase().includes("credit card")) {
             await tx.bank.update({
                 where: { id: transaction.bankId, userId: user.id },
                 data: {

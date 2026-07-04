@@ -24,53 +24,42 @@ export default function BankBalanceHistory({ userSettings }: { userSettings: Use
         year: new Date().getFullYear(),
     });
     const [viewMode, setViewMode] = useState<"combined" | "individual">("individual");
+    // null = all banks shown; a bank id = only that bank shown
+    const [selectedBankId, setSelectedBankId] = useState<string | null>(null);
 
-    const formatter = useMemo(
+    const currencyFormatter = useMemo(
         () => GetFormatterForCurrency(userSettings.currency),
         [userSettings.currency]
     );
-
-    // const query = useQuery<GetBankHistoryResponseType>({
-    //     queryKey: ["bank-history", timeFrame, period],
-    //     queryFn: () =>
-    //         fetch(
-    //             `/api/bank-history?timeFrame=${timeFrame}&year=${period.year}&month=${period.month}`
-    //         ).then((res) => res.json()),
-    // });
 
     const query = useQuery<GetBankHistoryResponseType>({
         queryKey: ["bank-history", timeFrame, period],
         queryFn: () =>
             fetch(
-            `/api/bank-history?timeFrame=${timeFrame}&year=${period.year}&month=${period.month}`
+                `/api/bank-history?timeFrame=${timeFrame}&year=${period.year}&month=${period.month}`
             ).then((res) => res.json()),
 
         select: (data) => {
             const creditCardIds = data.banks
-            .filter(bank => bank.bankName.toLowerCase().includes("credit card"))
-            .map(bank => bank.id);
+                .filter((bank) => bank.bankName.toLowerCase().includes("credit card"))
+                .map((bank) => bank.id);
 
             const remainingBanks = data.banks.filter(
-            bank => !creditCardIds.includes(bank.id)
+                (bank) => !creditCardIds.includes(bank.id)
             );
 
             return {
-            ...data,
-            banks: remainingBanks,
-            data: data.data.map(row => {
-                const newRow = { ...row };
-
-                // Remove credit card fields
-                creditCardIds.forEach(id => delete newRow[id]);
-
-                // Recalculate total from remaining bank IDs
-                newRow.total = remainingBanks.reduce(
-                (sum, bank) => sum + (Number(newRow[bank.id]) || 0),
-                0
-                );
-
-                return newRow;
-            }),
+                ...data,
+                banks: remainingBanks,
+                data: data.data.map((row) => {
+                    const newRow = { ...row };
+                    creditCardIds.forEach((id) => delete newRow[id]);
+                    newRow.total = remainingBanks.reduce(
+                        (sum, bank) => sum + (Number(newRow[bank.id]) || 0),
+                        0
+                    );
+                    return newRow;
+                }),
             };
         },
     });
@@ -78,7 +67,22 @@ export default function BankBalanceHistory({ userSettings }: { userSettings: Use
     const dataAvailable =
         query.data && query.data.data.length > 0 && query.data.banks.length > 0;
 
-    console.log("query.data", query.data);
+    // When switching away from individual, clear the selection
+    const handleViewModeChange = (mode: "combined" | "individual") => {
+        setViewMode(mode);
+        setSelectedBankId(null);
+    };
+
+    const handleBadgeClick = (bankId: string) => {
+        setSelectedBankId((prev) => (prev === bankId ? null : bankId));
+    };
+
+    // Which banks to render lines for
+    const visibleBanks = useMemo(() => {
+        if (!query.data?.banks) return [];
+        if (viewMode !== "individual" || selectedBankId === null) return query.data.banks;
+        return query.data.banks.filter((b) => b.id === selectedBankId);
+    }, [query.data?.banks, viewMode, selectedBankId]);
 
     return (
         <div className="pb-8 px-8">
@@ -93,34 +97,50 @@ export default function BankBalanceHistory({ userSettings }: { userSettings: Use
                             setPeriod={setPeriod}
                         />
 
-                        <div className="flex h-10 gap-2">
+                        <div className="flex h-10 gap-2 flex-wrap items-center">
+                            {/* View mode toggles */}
                             <Badge
                                 variant={viewMode === "combined" ? "default" : "outline"}
                                 className="cursor-pointer flex items-center gap-2 text-sm select-none"
-                                onClick={() => setViewMode("combined")}
+                                onClick={() => handleViewModeChange("combined")}
                             >
                                 Combined
                             </Badge>
                             <Badge
                                 variant={viewMode === "individual" ? "default" : "outline"}
                                 className="cursor-pointer flex items-center gap-2 text-sm select-none"
-                                onClick={() => setViewMode("individual")}
+                                onClick={() => handleViewModeChange("individual")}
                             >
                                 Individual
                             </Badge>
-                            {viewMode === "individual" && query.data?.banks.map((bank, i) => (
-                                <Badge
-                                    key={bank.id}
-                                    variant="outline"
-                                    className="flex items-center gap-2 text-sm"
-                                >
-                                    <div
-                                        className="h-4 w-4 rounded-full"
-                                        style={{ backgroundColor: BANK_COLORS[i % BANK_COLORS.length] }}
-                                    />
-                                    {bank.bankName}
-                                </Badge>
-                            ))}
+
+                            {/* Per-bank filter badges (individual mode only) */}
+                            {viewMode === "individual" &&
+                                query.data?.banks.map((bank, i) => {
+                                    const isHighlighted =
+                                        selectedBankId === null || selectedBankId === bank.id;
+                                    return (
+                                        <Badge
+                                            key={bank.id}
+                                            variant={selectedBankId === bank.id ? "default" : "outline"}
+                                            className={cn(
+                                                "cursor-pointer flex items-center gap-2 text-sm select-none transition-opacity",
+                                                !isHighlighted && "opacity-40"
+                                            )}
+                                            onClick={() => handleBadgeClick(bank.id)}
+                                        >
+                                            <div
+                                                className="h-4 w-4 rounded-full shrink-0"
+                                                style={{
+                                                    backgroundColor: BANK_COLORS[i % BANK_COLORS.length],
+                                                }}
+                                            />
+                                            {bank.bankName}
+                                        </Badge>
+                                    );
+                                })}
+
+                            {/* Combined mode label */}
                             {viewMode === "combined" && (
                                 <Badge variant="outline" className="flex items-center gap-2 text-sm">
                                     <div className="h-4 w-4 rounded-full bg-blue-500" />
@@ -184,7 +204,7 @@ export default function BankBalanceHistory({ userSettings }: { userSettings: Use
                                         fontSize={12}
                                         tickLine={false}
                                         axisLine={false}
-                                        tickFormatter={(v) => formatter.format(v)}
+                                        tickFormatter={(v) => currencyFormatter.format(v)}
                                         width={80}
                                     />
 
@@ -192,10 +212,12 @@ export default function BankBalanceHistory({ userSettings }: { userSettings: Use
                                         cursor={{ opacity: 0.1 }}
                                         content={(props) => (
                                             <BankTooltip
-                                                formatter={formatter}
+                                                active={props.active}
+                                                payload={props.payload}
+                                                currencyFormatter={currencyFormatter}
                                                 viewMode={viewMode}
                                                 banks={query.data!.banks}
-                                                {...props}
+                                                selectedBankId={selectedBankId}
                                             />
                                         )}
                                     />
@@ -211,18 +233,23 @@ export default function BankBalanceHistory({ userSettings }: { userSettings: Use
                                             activeDot={{ r: 4 }}
                                         />
                                     ) : (
-                                        query.data!.banks.map((bank, i) => (
-                                            <Line
-                                                key={bank.id}
-                                                type="monotone"
-                                                dataKey={bank.id}
-                                                name={`${bank.bankName} – ${bank.accountName}`}
-                                                stroke={BANK_COLORS[i % BANK_COLORS.length]}
-                                                strokeWidth={2}
-                                                dot={false}
-                                                activeDot={{ r: 4 }}
-                                            />
-                                        ))
+                                        visibleBanks.map((bank) => {
+                                            const originalIndex = query.data!.banks.findIndex(
+                                                (b) => b.id === bank.id
+                                            );
+                                            return (
+                                                <Line
+                                                    key={bank.id}
+                                                    type="monotone"
+                                                    dataKey={bank.id}
+                                                    name={`${bank.bankName} – ${bank.accountName}`}
+                                                    stroke={BANK_COLORS[originalIndex % BANK_COLORS.length]}
+                                                    strokeWidth={2}
+                                                    dot={false}
+                                                    activeDot={{ r: 4 }}
+                                                />
+                                            );
+                                        })
                                     )}
                                 </LineChart>
                             </ResponsiveContainer>
@@ -246,15 +273,17 @@ export default function BankBalanceHistory({ userSettings }: { userSettings: Use
 function BankTooltip({
     active,
     payload,
-    formatter,
+    currencyFormatter,
     viewMode,
     banks,
+    selectedBankId,
 }: {
     active?: boolean;
     payload?: any[];
-    formatter: Intl.NumberFormat;
+    currencyFormatter: Intl.NumberFormat;
     viewMode: "combined" | "individual";
     banks: BankMeta[];
+    selectedBankId: string | null;
 }) {
     if (!active || !payload || payload.length === 0) return null;
 
@@ -268,7 +297,7 @@ function BankTooltip({
                     <div className="flex w-full justify-between gap-4">
                         <p className="text-sm text-muted-foreground">Total Balance</p>
                         <span className="text-sm font-bold text-blue-500">
-                            {formatter.format(data.total ?? 0)}
+                            {currencyFormatter.format(data.total ?? 0)}
                         </span>
                     </div>
                 </div>
@@ -276,27 +305,34 @@ function BankTooltip({
         );
     }
 
+    const visibleBanks = selectedBankId
+        ? banks.filter((b) => b.id === selectedBankId)
+        : banks;
+
     return (
         <div className="min-w-[260px] rounded border bg-background p-4 space-y-1">
-            {banks.map((bank, i) => (
-                <div key={bank.id} className="flex items-center gap-2">
-                    <div
-                        className="h-4 w-4 rounded-full shrink-0"
-                        style={{ backgroundColor: BANK_COLORS[i % BANK_COLORS.length] }}
-                    />
-                    <div className="flex w-full justify-between gap-4">
-                        <p className={cn("text-sm text-muted-foreground truncate max-w-[130px]")}>
-                            {bank.bankName} – {bank.accountName}
-                        </p>
-                        <span
-                            className="text-sm font-bold shrink-0"
-                            style={{ color: BANK_COLORS[i % BANK_COLORS.length] }}
-                        >
-                            {formatter.format((data[bank.id] as number) ?? 0)}
-                        </span>
+            {visibleBanks.map((bank) => {
+                const originalIndex = banks.findIndex((b) => b.id === bank.id);
+                return (
+                    <div key={bank.id} className="flex items-center gap-2">
+                        <div
+                            className="h-4 w-4 rounded-full shrink-0"
+                            style={{ backgroundColor: BANK_COLORS[originalIndex % BANK_COLORS.length] }}
+                        />
+                        <div className="flex w-full justify-between gap-4">
+                            <p className={cn("text-sm text-muted-foreground truncate max-w-[130px]")}>
+                                {bank.bankName} – {bank.accountName}
+                            </p>
+                            <span
+                                className="text-sm font-bold shrink-0"
+                                style={{ color: BANK_COLORS[originalIndex % BANK_COLORS.length] }}
+                            >
+                                {currencyFormatter.format((data[bank.id] as number) ?? 0)}
+                            </span>
+                        </div>
                     </div>
-                </div>
-            ))}
+                );
+            })}
         </div>
     );
 }

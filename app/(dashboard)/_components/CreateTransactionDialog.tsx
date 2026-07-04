@@ -199,12 +199,12 @@ export default function CreateTransactionDialog({ trigger, type }: Props) {
                             name="bankId"
                             render={({}) => (
                                 <FormItem className="flex flex-col">
-                                    <FormLabel>Bank <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
+                                    <FormLabel>Source <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
                                     <FormControl>
                                         <BankPicker ttype={type} onChange={handleBankChange} className="w-full" />
                                     </FormControl>
                                     <FormDescription>
-                                        Select a bank account to update its balance
+                                        Select the source of transaction
                                     </FormDescription>
                                 </FormItem>
                             )}

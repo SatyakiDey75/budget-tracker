@@ -97,7 +97,7 @@ export async function CreateTransaction(form: CreateTransactionSchemaType) {
             },
         });
 
-        if (bankRow) {
+        if (bankRow && !bankRow.bankName.toLowerCase().includes("credit card")) {
             await tx.bank.update({
                 where: { id: bankRow.id, userId: user.id },
                 data: {
