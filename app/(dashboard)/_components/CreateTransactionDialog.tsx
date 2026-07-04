@@ -51,6 +51,11 @@ export default function CreateTransactionDialog({ trigger, type }: Props) {
 
     const { mutate, isPending } = useMutation({
         mutationFn: CreateTransaction,
+        onError: () => {
+            toast.error("Something went wrong", {
+                id: "create-transaction",
+            });
+        },
         onSuccess: () => {
             toast.success("Transaction created successfully 🎉", {
                 id: "create-transaction",
@@ -63,6 +68,7 @@ export default function CreateTransactionDialog({ trigger, type }: Props) {
                 date: new Date(),
                 category: undefined,
                 bankId: undefined,
+                merchantName: undefined,
             });
 
             // after creating a transaction, we need to invalidate the overview query which will refetch the data in the dashboard
@@ -209,6 +215,24 @@ export default function CreateTransactionDialog({ trigger, type }: Props) {
                                 </FormItem>
                             )}
                         />
+
+                        {type === "expense" && (
+                            <FormField
+                                control={form.control}
+                                name="merchantName"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Merchant <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="e.g. Amazon, Swiggy, Zomato" {...field} />
+                                        </FormControl>
+                                        <FormDescription>
+                                            Where was this expense made?
+                                        </FormDescription>
+                                    </FormItem>
+                                )}
+                            />
+                        )}
                     </form>
                 </Form>
                 <DialogFooter>

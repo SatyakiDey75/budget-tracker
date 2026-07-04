@@ -7,6 +7,7 @@ export const CreateTransactionSchema = z.object({
     category: z.string(),
     type: z.union([z.literal("income"), z.literal("expense")]),
     bankId: z.string().optional(),
+    merchantName: z.string().optional(),
 })
 
 export type CreateTransactionSchemaType = z.infer<typeof CreateTransactionSchema>;

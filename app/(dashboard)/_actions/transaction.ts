@@ -16,7 +16,7 @@ export async function CreateTransaction(form: CreateTransactionSchemaType) {
         redirect("/sign-in");
     }
 
-    const { amount, category, date, description, type, bankId } = parsedBody.data;
+    const { amount, category, date, description, type, bankId, merchantName } = parsedBody.data;
 
     const categoryRow = await prisma.category.findFirst({
         where: {
@@ -50,6 +50,7 @@ export async function CreateTransaction(form: CreateTransactionSchemaType) {
                 bankId: bankRow?.id,
                 bankName: bankRow?.bankName,
                 accountName: bankRow?.accountName,
+                merchantName: type === "expense" ? (merchantName || null) : null,
             },
         });
 

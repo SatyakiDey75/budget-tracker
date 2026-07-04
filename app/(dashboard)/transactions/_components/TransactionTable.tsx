@@ -77,6 +77,20 @@ const columns: ColumnDef<TransactionHistoryRow>[] = [
         ),
     },
     {
+        accessorKey: "merchantName",
+        header: ({ column }) => (
+            <DataTableColumnHeader column={column} title="Merchant" />
+        ),
+        filterFn: (row, id, value) => {
+            return value.includes(row.getValue(id));
+        },
+        cell: ({ row }) => (
+            <div className="capitalize">
+                {(row.original as any).merchantName || "—"}
+            </div>
+        ),
+    },
+    {
         accessorKey: "description",
         header: ({ column }) => (
             <DataTableColumnHeader column={column} title="Description" />
@@ -199,6 +213,18 @@ export default function TransactionTable({ from, to }: Props) {
         return Array.from(seen.values());
     }, [history.data]);
 
+    const merchantOptions = useMemo(() => {
+        const seen = new Map<string, { value: string; label: string }>();
+        history.data?.forEach((transaction) => {
+            const name = (transaction as any).merchantName;
+            if (!name) return;
+            if (!seen.has(name)) {
+                seen.set(name, { value: name, label: name });
+            }
+        });
+        return Array.from(seen.values());
+    }, [history.data]);
+
     return (
         <div className="w-full">
             <div className="flex flex-wrap items-center justify-between gap-2 py-4">
@@ -229,6 +255,14 @@ export default function TransactionTable({ from, to }: Props) {
                             column={table.getColumn("bankName")}
                         />
                     )}
+
+                    { table.getColumn("merchantName") && merchantOptions.length > 0 && (
+                        <DataTableFacetedFilter
+                            title="Merchant"
+                            options={merchantOptions}
+                            column={table.getColumn("merchantName")}
+                        />
+                    )}
                 </div>
                 
                 <div className="flex flex-wrap gap-2">
@@ -240,6 +274,7 @@ export default function TransactionTable({ from, to }: Props) {
                             bank: row.original.bankName
                                 ? `${row.original.bankName} – ${row.original.accountName}`
                                 : "",
+                            merchant: (row.original as any).merchantName || "",
                             type: row.original.type,
                             amount: row.original.amount,
                             formattedAmount: row.original.formattedAmount,

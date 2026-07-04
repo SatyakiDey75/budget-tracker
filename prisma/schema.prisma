@@ -41,6 +41,8 @@ model Transaction {
   bankId      String?  @db.ObjectId
   bankName    String?
   accountName String?
+
+  merchantName String?
 }
 
 model Bank {
