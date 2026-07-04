@@ -20,6 +20,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CreateTransaction } from "../_actions/transaction";
 import { toast } from "sonner";
 import { DateToUTCDate } from "@/lib/helpers";
+import { useRouter } from "next/navigation";
 
 interface Props {
     trigger: React.ReactNode;
@@ -47,6 +48,7 @@ export default function CreateTransactionDialog({ trigger, type }: Props) {
         form.setValue("bankId", value);
     }, [form]);
 
+    const router = useRouter();
     const queryClient = useQueryClient();
 
     const { mutate, isPending } = useMutation({
@@ -71,10 +73,9 @@ export default function CreateTransactionDialog({ trigger, type }: Props) {
                 merchantName: undefined,
             });
 
-            // after creating a transaction, we need to invalidate the overview query which will refetch the data in the dashboard
-            queryClient.invalidateQueries({
-                queryKey: ["overview"],
-            });
+            queryClient.invalidateQueries({ queryKey: ["overview"] });
+            queryClient.invalidateQueries({ queryKey: ["bank-history"] });
+            router.refresh();
 
             setOpen((prev) => !prev);
         }

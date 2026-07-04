@@ -98,13 +98,31 @@ export async function CreateTransaction(form: CreateTransactionSchemaType) {
             },
         });
 
-        if (bankRow && !bankRow.bankName.toLowerCase().includes("credit card")) {
-            await tx.bank.update({
-                where: { id: bankRow.id, userId: user.id },
-                data: {
-                    balance: { increment: type === "income" ? amount : -amount },
-                },
-            });
+        if (bankRow) {
+            const isCredit = bankRow.bankName.toLowerCase().includes("credit card");
+            if (isCredit) {
+                // Find the parent bank by matching the prefix before "Credit Card"
+                const prefix = bankRow.bankName.replace(/\s*credit\s*card.*$/i, "").trim();
+                if (prefix) {
+                    const allBanks = await tx.bank.findMany({ where: { userId: user.id } });
+                    const parentBank = allBanks.find(
+                        (b) =>
+                            !b.bankName.toLowerCase().includes("credit card") &&
+                            (prefix.toLowerCase() === 'pnb' ? b.bankName.toLowerCase().includes('punjab') : prefix.toLowerCase() === 'sbi' ? b.bankName.toLowerCase().includes('state') : b.bankName.toLowerCase().includes('hdfc'))
+                    );
+                    if (parentBank) {
+                        await tx.bank.update({
+                            where: { id: parentBank.id, userId: user.id },
+                            data: { balance: { increment: type === "income" ? amount : -amount } },
+                        });
+                    }
+                }
+            } else {
+                await tx.bank.update({
+                    where: { id: bankRow.id, userId: user.id },
+                    data: { balance: { increment: type === "income" ? amount : -amount } },
+                });
+            }
         }
     });
 }

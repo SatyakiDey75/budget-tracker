@@ -55,16 +55,38 @@ export async function DeleteTransaction(id: string) {
             },
         });
 
-        if (transaction.bankId && transaction.bankName &&
-            !transaction.bankName.toLowerCase().includes("credit card")) {
-            await tx.bank.update({
-                where: { id: transaction.bankId, userId: user.id },
-                data: {
-                    balance: {
-                        increment: transaction.type === "income" ? -transaction.amount : transaction.amount,
+        if (transaction.bankId && transaction.bankName) {
+            const isCredit = transaction.bankName.toLowerCase().includes("credit card");
+            if (isCredit) {
+                const prefix = transaction.bankName.replace(/\s*credit\s*card.*$/i, "").trim();
+                if (prefix) {
+                    const allBanks = await tx.bank.findMany({ where: { userId: user.id } });
+                    const parentBank = allBanks.find(
+                        (b) =>
+                            !b.bankName.toLowerCase().includes("credit card") &&
+                            b.bankName.toLowerCase().includes(prefix.toLowerCase())
+                    );
+                    if (parentBank) {
+                        await tx.bank.update({
+                            where: { id: parentBank.id, userId: user.id },
+                            data: {
+                                balance: {
+                                    increment: transaction.type === "income" ? -transaction.amount : transaction.amount,
+                                },
+                            },
+                        });
+                    }
+                }
+            } else {
+                await tx.bank.update({
+                    where: { id: transaction.bankId, userId: user.id },
+                    data: {
+                        balance: {
+                            increment: transaction.type === "income" ? -transaction.amount : transaction.amount,
+                        },
                     },
-                },
-            });
+                });
+            }
         }
     });
 }

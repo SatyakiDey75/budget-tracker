@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { DeleteTransaction } from "../_actions/deleteTransaction";
+import { useRouter } from "next/navigation";
 
 
 interface Props {
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export default function DeleteTransactionDialog({ open, setOpen, transactionId }: Props) {
+    const router = useRouter();
     const queryClient = useQueryClient();
 
     const deleteMutation = useMutation({
@@ -22,9 +24,10 @@ export default function DeleteTransactionDialog({ open, setOpen, transactionId }
             toast.success(`Transaction deleted successfully 🎉`, {
                 id: transactionId,
             });
-            await queryClient.invalidateQueries({
-                queryKey: ["transactions"],
-            });
+            queryClient.invalidateQueries({ queryKey: ["transactions"] });
+            queryClient.invalidateQueries({ queryKey: ["overview"] });
+            queryClient.invalidateQueries({ queryKey: ["bank-history"] });
+            router.refresh();
         },
         onError: () => {
             toast.error("Something went wrong", {
