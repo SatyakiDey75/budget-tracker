@@ -11,7 +11,8 @@ import { useQuery } from "@tanstack/react-query";
 import { format, toDate } from "date-fns";
 import React, { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
-import { Cell, Pie, PieChart, Sector, Tooltip } from "recharts";
+// import { Cell, Pie, PieChart, Sector, Tooltip } from "recharts";
+import { Cell, Pie, PieChart, Sector } from "recharts";
 
 const CHART_COLORS = [
     "#22c55e",
