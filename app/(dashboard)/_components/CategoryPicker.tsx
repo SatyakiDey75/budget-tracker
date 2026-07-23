@@ -3,7 +3,6 @@
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverTrigger } from "@/components/ui/popover";
-import { TransactionType } from "@/lib/types";
 import { Category } from "@prisma/client";
 import { PopoverContent } from "@radix-ui/react-popover";
 import { useQuery } from "@tanstack/react-query";

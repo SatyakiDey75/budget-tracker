@@ -6,7 +6,6 @@ import React from "react";
 import { DeleteCategory } from "../_actions/categories";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog";
-import { TransactionType } from "@/lib/types";
 
 interface Props {
     trigger: React.ReactNode;

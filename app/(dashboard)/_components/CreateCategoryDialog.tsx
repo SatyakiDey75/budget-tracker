@@ -1,6 +1,5 @@
 "use client";
 
-import { TransactionType } from "@/lib/types";
 import { CreateCategorySchema, CreateCategorySchemaType } from "@/schema/categories";
 import React, { ReactNode, useCallback } from "react";
 import { useForm } from "react-hook-form";
