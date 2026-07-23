@@ -57,7 +57,7 @@ export default function StatsCards({ from, to, userSettings }: Props) {
             <SkeletonWrapper isLoading={statsQuery.isLoading}>
                 <StatCard
                     formatter={formatter}
-                    title="Investment"
+                    title="Invested"
                     value={investment}
                     icon={<Landmark className="h-12 w-12 items-center rounded-lg p-2 text-blue-500 bg-blue-400/10" />}
                 />

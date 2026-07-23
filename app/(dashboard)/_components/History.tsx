@@ -52,7 +52,7 @@ export default function History({ userSettings }: {userSettings: UserSettings}) 
                             </Badge>
                             <Badge variant={"outline"} className="flex items-center gap-2 text-sm">
                                 <div className="h-4 w-4 rounded-full bg-blue-500"></div>
-                                Investment
+                                Invested
                             </Badge>
                         </div>
                     </CardTitle>
@@ -120,7 +120,7 @@ export default function History({ userSettings }: {userSettings: UserSettings}) 
                                     />
                                     <Bar
                                         dataKey={"investment"}
-                                        label="Investment"
+                                        label="Invested"
                                         fill="url(#investmentBar)"
                                         radius={4}
                                         className="cursor-pointer"
@@ -162,7 +162,7 @@ function CustomToolTip({ active, payload, formatter }: any) {
         <div className="min-w-[300px] rounded border bg-background p-4">
             <TooltipRow formatter={formatter} label="Expense" value={expense} bgColor="bg-rose-500" textColor="text-rose-500" />
             <TooltipRow formatter={formatter} label="Income" value={income} bgColor="bg-emerald-500" textColor="text-emerald-500" />
-            <TooltipRow formatter={formatter} label="Investment" value={investment || 0} bgColor="bg-blue-500" textColor="text-blue-500" />
+            <TooltipRow formatter={formatter} label="Invested" value={investment || 0} bgColor="bg-blue-500" textColor="text-blue-500" />
             <TooltipRow formatter={formatter} label="Balance" value={income - expense - (investment || 0)} bgColor="bg-gray-500" textColor="text-foreground" />
         </div>
     )

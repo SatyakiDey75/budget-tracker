@@ -248,7 +248,7 @@ export default function TransactionTable({ from, to }: Props) {
                             options={[
                                 { value: "income", label: "Income" },
                                 { value: "expense", label: "Expense" },
-                                { value: "investment", label: "Investment" },
+                                { value: "investment", label: "Investments" },
                             ]}
                             column={table.getColumn("type")}
                         />
