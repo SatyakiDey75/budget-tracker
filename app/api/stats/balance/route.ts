@@ -48,5 +48,6 @@ async function getBalancedStats(userId: string, from: Date, to: Date) {
     return {
         expense: totals.find(t => t.type === "expense")?._sum.amount || 0,
         income: totals.find(t => t.type === "income")?._sum.amount || 0,
+        investment: totals.find(t => t.type === "investment")?._sum.amount || 0,
     }
 }

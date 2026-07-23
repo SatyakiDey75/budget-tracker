@@ -29,9 +29,10 @@ import { DataTableFacetedFilter } from "@/components/datatable/FacetedFilters";
 import { DataTableViewOptions } from "@/components/datatable/ColumnToggle";
 import { Button } from "@/components/ui/button";
 import { download, generateCsv, mkConfig } from "export-to-csv";
-import { DownloadIcon, MoreHorizontal, TrashIcon } from "lucide-react";
+import { DownloadIcon, MoreHorizontal, PencilIcon, TrashIcon } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import DeleteTransactionDialog from "./DeleteTransactionDialog";
+import EditTransactionDialog from "../../_components/EditTransactionDialog";
 import { toDate } from "date-fns";
 
 interface Props {
@@ -111,7 +112,7 @@ const columns: ColumnDef<TransactionHistoryRow>[] = [
                 day: "2-digit",
             });
             return (
-                <div className="text-muted-foreground">{formattedDate}</div>
+                <div className="">{formattedDate}</div>
             )
         },
     },
@@ -124,8 +125,12 @@ const columns: ColumnDef<TransactionHistoryRow>[] = [
             return value.includes(row.getValue(id));
         },
         cell: ({ row }) => (
-            <div className={cn("capitalize rounded-lg text-center p-2", 
-                row.original.type === "income" ? "bg-emerald-400/10 text-emerald-500" : "bg-rose-400/10 text-rose-500")}>
+            <div className={cn("capitalize rounded-lg text-center p-2",
+                row.original.type === "income"
+                    ? "bg-emerald-400/10 text-emerald-500"
+                    : row.original.type === "investment"
+                    ? "bg-blue-400/10 text-blue-500"
+                    : "bg-rose-400/10 text-rose-500")}>
                 {row.original.type}
             </div>
         ),
@@ -243,6 +248,7 @@ export default function TransactionTable({ from, to }: Props) {
                             options={[
                                 { value: "income", label: "Income" },
                                 { value: "expense", label: "Expense" },
+                                { value: "investment", label: "Investment" },
                             ]}
                             column={table.getColumn("type")}
                         />
@@ -342,6 +348,10 @@ export default function TransactionTable({ from, to }: Props) {
                     >
                         Previous
                     </Button>
+                    <span className="text-sm text-muted-foreground px-2">
+                        Page {table.getState().pagination.pageIndex + 1} of{" "}
+                        {table.getPageCount()}
+                    </span>
                     <Button
                         variant="outline"
                         size="sm"
@@ -358,13 +368,19 @@ export default function TransactionTable({ from, to }: Props) {
 
 function RowActions({ transaction }: { transaction: TransactionHistoryRow }) {
     const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
+    const [showEditDialog, setShowEditDialog] = React.useState(false);
 
     return (
         <>
             <DeleteTransactionDialog
                 open={showDeleteDialog}
                 setOpen={setShowDeleteDialog}
-                transactionId={transaction.id} 
+                transactionId={transaction.id}
+            />
+            <EditTransactionDialog
+                open={showEditDialog}
+                setOpen={setShowEditDialog}
+                transaction={transaction}
             />
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -376,12 +392,22 @@ function RowActions({ transaction }: { transaction: TransactionHistoryRow }) {
                 <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="flex items-center gap-2" onSelect={() => {setShowDeleteDialog((prev) => !prev)}}>
+                    <DropdownMenuItem
+                        className="flex items-center gap-2"
+                        onSelect={() => setShowEditDialog(true)}
+                    >
+                        <PencilIcon className="h-4 w-4 text-muted-foreground" />
+                        Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                        className="flex items-center gap-2"
+                        onSelect={() => setShowDeleteDialog((prev) => !prev)}
+                    >
                         <TrashIcon className="h-4 w-4 text-muted-foreground" />
                         Delete
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
         </>
-    )
+    );
 }

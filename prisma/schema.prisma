@@ -42,7 +42,8 @@ model Transaction {
   bankName    String?
   accountName String?
 
-  merchantName String?
+  merchantName  String?
+  investmentApp String?
 }
 
 model Bank {
@@ -65,8 +66,9 @@ model MonthHistory {
   day     Int
   month   Int
   year    Int
-  income  Float
-  expense Float
+  income     Float
+  expense    Float
+  investment Float @default(0)
 
   @@unique([day, month, year, userId])
 }
@@ -75,8 +77,9 @@ model YearHistory {
   userId  String
   month   Int
   year    Int
-  income  Float
-  expense Float
+  income     Float
+  expense    Float
+  investment Float @default(0)
 
   @@unique([month, year, userId])
 }

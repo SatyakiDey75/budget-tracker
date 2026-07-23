@@ -1,56 +1,39 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { CreateTransactionSchema, CreateTransactionSchemaType } from "@/schema/transaction";
+import { CreateInvestmentSchema, CreateInvestmentSchemaType } from "@/schema/transaction";
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
-export async function CreateTransaction(form: CreateTransactionSchemaType) {
-    const parsedBody = CreateTransactionSchema.safeParse(form);
-    if (!parsedBody.success) {
-        throw new Error("Bad request");
-    }
+export async function CreateInvestment(form: CreateInvestmentSchemaType) {
+    const parsedBody = CreateInvestmentSchema.safeParse(form);
+    if (!parsedBody.success) throw new Error("Bad request");
 
     const user = await currentUser();
-    if (!user) {
-        redirect("/sign-in");
-    }
+    if (!user) redirect("/sign-in");
 
-    const { amount, category, date, description, type, bankId, merchantName } = parsedBody.data;
-
-    const categoryRow = await prisma.category.findFirst({
-        where: {
-            userId: user.id,
-            name: category,
-        },
-    });
-
-    if (!categoryRow) {
-        throw new Error("Category not found");
-    }
+    const { amount, date, description, bankId, investmentApp } = parsedBody.data;
 
     const bankRow = bankId
         ? await prisma.bank.findFirst({ where: { id: bankId, userId: user.id } })
         : null;
-
-    if (bankId && !bankRow) {
-        throw new Error("Bank not found");
-    }
+    if (bankId && !bankRow) throw new Error("Bank not found");
 
     await prisma.$transaction(async (tx) => {
-        await tx.transaction.create({
+        await (tx.transaction as any).create({
             data: {
                 userId: user.id,
                 amount,
                 date,
                 description: description || "",
-                type,
-                category: categoryRow.name,
-                categoryIcon: categoryRow.icon,
-                bankId: bankRow?.id,
-                bankName: bankRow?.bankName,
-                accountName: bankRow?.accountName,
-                merchantName: type === "expense" ? (merchantName || null) : null,
+                type: "investment",
+                category: "Investment",
+                categoryIcon: "📈",
+                bankId: bankRow?.id ?? null,
+                bankName: bankRow?.bankName ?? null,
+                accountName: bankRow?.accountName ?? null,
+                investmentApp: investmentApp || null,
+                merchantName: investmentApp || null,
             },
         });
 
@@ -68,13 +51,12 @@ export async function CreateTransaction(form: CreateTransactionSchemaType) {
                 day: date.getUTCDate(),
                 month: date.getUTCMonth(),
                 year: date.getUTCFullYear(),
-                expense: type === "expense" ? amount : 0,
-                income: type === "income" ? amount : 0,
-                investment: 0,
+                expense: 0,
+                income: 0,
+                investment: amount,
             },
             update: {
-                expense: { increment: type === "expense" ? amount : 0 },
-                income: { increment: type === "income" ? amount : 0 },
+                investment: { increment: amount },
             },
         });
 
@@ -90,39 +72,37 @@ export async function CreateTransaction(form: CreateTransactionSchemaType) {
                 userId: user.id,
                 month: date.getUTCMonth(),
                 year: date.getUTCFullYear(),
-                expense: type === "expense" ? amount : 0,
-                income: type === "income" ? amount : 0,
-                investment: 0,
+                expense: 0,
+                income: 0,
+                investment: amount,
             },
             update: {
-                expense: { increment: type === "expense" ? amount : 0 },
-                income: { increment: type === "income" ? amount : 0 },
+                investment: { increment: amount },
             },
         });
 
         if (bankRow) {
             const isCredit = bankRow.bankName.toLowerCase().includes("credit card");
             if (isCredit) {
-                // Find the parent bank by matching the prefix before "Credit Card"
                 const prefix = bankRow.bankName.replace(/\s*credit\s*card.*$/i, "").trim();
                 if (prefix) {
                     const allBanks = await tx.bank.findMany({ where: { userId: user.id } });
                     const parentBank = allBanks.find(
                         (b) =>
                             !b.bankName.toLowerCase().includes("credit card") &&
-                            (prefix.toLowerCase() === 'pnb' ? b.bankName.toLowerCase().includes('punjab') : prefix.toLowerCase() === 'sbi' ? b.bankName.toLowerCase().includes('state') : b.bankName.toLowerCase().includes('hdfc'))
+                            b.bankName.toLowerCase().includes(prefix.toLowerCase())
                     );
                     if (parentBank) {
                         await tx.bank.update({
                             where: { id: parentBank.id, userId: user.id },
-                            data: { balance: { increment: type === "income" ? amount : -amount } },
+                            data: { balance: { increment: -amount } },
                         });
                     }
                 }
             } else {
                 await tx.bank.update({
                     where: { id: bankRow.id, userId: user.id },
-                    data: { balance: { increment: type === "income" ? amount : -amount } },
+                    data: { balance: { increment: -amount } },
                 });
             }
         }

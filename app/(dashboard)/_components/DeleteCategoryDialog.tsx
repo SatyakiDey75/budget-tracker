@@ -51,7 +51,7 @@ export default function DeleteCategoryDialog({ category, trigger }: Props) {
                         toast.loading("Deleting category...", {
                             id: categoryIdentifier,
                         });
-                        deleteMutation.mutate({ name: category.name, type: category.type as TransactionType });
+                        deleteMutation.mutate({ name: category.name, type: category.type as "income" | "expense" });
                     }}>Continue</AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>

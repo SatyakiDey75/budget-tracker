@@ -24,7 +24,7 @@ import { useRouter } from "next/navigation";
 
 interface Props {
     trigger: React.ReactNode;
-    type: TransactionType;
+    type: "income" | "expense";
 }
 
 

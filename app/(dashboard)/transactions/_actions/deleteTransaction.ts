@@ -38,6 +38,7 @@ export async function DeleteTransaction(id: string) {
             data: {
                 ...(transaction.type === "expense" && { expense: { decrement: transaction.amount } }),
                 ...(transaction.type === "income" && { income: { decrement: transaction.amount } }),
+                ...(transaction.type === "investment" && { investment: { decrement: transaction.amount } }),
             },
         });
 
@@ -52,6 +53,7 @@ export async function DeleteTransaction(id: string) {
             data: {
                 ...(transaction.type === "expense" && { expense: { decrement: transaction.amount } }),
                 ...(transaction.type === "income" && { income: { decrement: transaction.amount } }),
+                ...(transaction.type === "investment" && { investment: { decrement: transaction.amount } }),
             },
         });
 

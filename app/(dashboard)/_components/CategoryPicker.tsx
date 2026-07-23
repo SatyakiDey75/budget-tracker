@@ -13,14 +13,19 @@ import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Props {
-    type: TransactionType;
+    type: "income" | "expense";
     onChange: (value: string) => void;
+    value?: string;
 }
 
-export default function CategoryPicker({ type, onChange }: Props) {
+export default function CategoryPicker({ type, onChange, value: initialValue }: Props) {
 
     const [open, setOpen] = React.useState(false);
-    const [value, setValue] = React.useState("");
+    const [value, setValue] = React.useState(initialValue || "");
+
+    useEffect(() => {
+        if (initialValue !== undefined) setValue(initialValue);
+    }, [initialValue]);
 
     useEffect(() => {
         if (!value) return;

@@ -22,11 +22,16 @@ interface Props {
     onChange: (value: string | undefined) => void;
     className?: string;
     ttype?: TransactionType;
+    value?: string;
 }
-    
-export default function BankPicker({ onChange, className, ttype }: Props) {
+
+export default function BankPicker({ onChange, className, ttype, value: initialValue }: Props) {
     const [open, setOpen] = React.useState(false);
-    const [value, setValue] = React.useState<string>("");
+    const [value, setValue] = React.useState<string>(initialValue || "");
+
+    useEffect(() => {
+        if (initialValue !== undefined) setValue(initialValue);
+    }, [initialValue]);
 
     useEffect(() => {
         onChange(value || undefined);
@@ -73,7 +78,7 @@ export default function BankPicker({ onChange, className, ttype }: Props) {
                     </CommandEmpty>
                     <CommandGroup>
                         <CommandList>
-                            {banksQuery.data?.map((bank) => (ttype == 'expense' || (ttype == 'income' && !bank.bankName.includes('Credit Card'))) && (
+                            {banksQuery.data?.map((bank) => (ttype === 'expense' || !bank.bankName.toLowerCase().includes('credit card')) && (
                                 <CommandItem key={bank.id} onSelect={() => handleSelect(bank.id)}>
                                     <BankRow bank={bank} />
                                     <Check

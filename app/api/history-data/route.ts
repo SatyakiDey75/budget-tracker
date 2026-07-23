@@ -49,6 +49,7 @@ async function getHistoryData(userId: string, timeFrame: TimeFrame, period: Peri
 type HistoryData = {
     expense: number;
     income: number;
+    investment: number;
     month: number;
     year: number;
     day?: number;
@@ -64,6 +65,7 @@ async function getYearHistoryData(userId: string, year: number) {
         _sum: {
             income: true,
             expense: true,
+            investment: true,
         },
         orderBy: [{
             month: "asc",
@@ -77,11 +79,13 @@ async function getYearHistoryData(userId: string, year: number) {
     for (let i = 0; i < 12; i++) {
         let expense = 0;
         let income = 0;
+        let investment = 0;
 
         const month = result.find((row) => row.month === i);
         if (month) {
             expense = month._sum.expense || 0;
             income = month._sum.income || 0;
+            investment = month._sum.investment || 0;
         }
 
         history.push({
@@ -89,6 +93,7 @@ async function getYearHistoryData(userId: string, year: number) {
             month: i,
             expense,
             income,
+            investment,
         })
     }
 
@@ -106,6 +111,7 @@ async function getMonthHistoryData(userId: string, month: number, year: number) 
         _sum: {
             income: true,
             expense: true,
+            investment: true,
         },
         orderBy: [{
             day: "asc",
@@ -121,11 +127,13 @@ async function getMonthHistoryData(userId: string, month: number, year: number) 
     for (let i = 1; i <= daysInMonth; i++) {
         let expense = 0;
         let income = 0;
+        let investment = 0;
 
         const day = result.find((row) => row.day === i);
         if (day) {
             expense = day._sum.expense || 0;
             income = day._sum.income || 0;
+            investment = day._sum.investment || 0;
         }
 
         history.push({
@@ -134,8 +142,9 @@ async function getMonthHistoryData(userId: string, month: number, year: number) 
             day: i,
             expense,
             income,
+            investment,
         })
     }
 
-    return history;    
+    return history;
 }

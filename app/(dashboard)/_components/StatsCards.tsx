@@ -7,7 +7,7 @@ import { GetFormatterForCurrency } from "@/lib/helpers";
 import { UserSettings } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import { toDate } from "date-fns";
-import { TrendingDown, TrendingUp, Wallet } from "lucide-react";
+import { Landmark, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import React, { useCallback, useMemo } from "react";
 import CountUp from "react-countup";
 
@@ -30,32 +30,42 @@ export default function StatsCards({ from, to, userSettings }: Props) {
 
     const income = statsQuery.data?.income || 0;
     const expense = statsQuery.data?.expense || 0;
+    const investment = statsQuery.data?.investment || 0;
 
-    const balance = income - expense;
+    const balance = income - expense - investment;
 
     return (
         <div className="relative flex w-full flex-wrap gap-4 md:flex-nowrap">
             <SkeletonWrapper isLoading={statsQuery.isLoading}>
-                <StatCard 
-                    formatter={formatter} 
+                <StatCard
+                    formatter={formatter}
                     title="Income"
                     value={income}
                     icon={<TrendingUp className="h-12 w-12 items-center rounded-lg p-2 text-emerald-500 bg-emerald-400/10" />}
                 />
             </SkeletonWrapper>
-            
+
             <SkeletonWrapper isLoading={statsQuery.isLoading}>
-                <StatCard 
-                    formatter={formatter} 
+                <StatCard
+                    formatter={formatter}
                     title="Expense"
                     value={expense}
                     icon={<TrendingDown className="h-12 w-12 items-center rounded-lg p-2 text-rose-500 bg-rose-400/10" />}
                 />
             </SkeletonWrapper>
-            
+
             <SkeletonWrapper isLoading={statsQuery.isLoading}>
-                <StatCard 
-                    formatter={formatter} 
+                <StatCard
+                    formatter={formatter}
+                    title="Investment"
+                    value={investment}
+                    icon={<Landmark className="h-12 w-12 items-center rounded-lg p-2 text-blue-500 bg-blue-400/10" />}
+                />
+            </SkeletonWrapper>
+
+            <SkeletonWrapper isLoading={statsQuery.isLoading}>
+                <StatCard
+                    formatter={formatter}
                     title="Balance"
                     value={balance}
                     icon={<Wallet className="h-12 w-12 items-center rounded-lg p-2 text-violet-500 bg-violet-400/10" />}
@@ -69,7 +79,7 @@ function StatCard({ title, value, icon, formatter }: { title: string, value: num
     const formatFn = useCallback((value: number) => {
         return formatter.format(value);
     }, [formatter]);
-    
+
     return (
         <Card className="flex h-24 w-full items-center gap-2 p-4">
             {icon}

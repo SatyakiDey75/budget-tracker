@@ -146,7 +146,7 @@ function BankCard({ bank, formatter }: { bank: BankRecord; formatter: Intl.Numbe
     );
 }
 
-function CategoryList({ type }: { type: TransactionType }) {
+function CategoryList({ type }: { type: "income" | "expense" }) {
     const categoriesQuery = useQuery({
         queryKey: ["categories", type],
         queryFn: () => fetch(`/api/categories?type=${type}`).then((res) => res.json()),

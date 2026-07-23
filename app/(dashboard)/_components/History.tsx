@@ -40,7 +40,7 @@ export default function History({ userSettings }: {userSettings: UserSettings}) 
                 <CardHeader className="gap-2">
                     <CardTitle className="grid grid-flow-row justify-between gap-2 md:grid-flow-col">
                         <HistoryPeriodSelector timeFrame={timeFrame} setTimeFrame={setTimeFrame} period={period} setPeriod={setPeriod} />
-                        
+
                         <div className="flex h-10 gap-2">
                             <Badge variant={"outline"} className="flex items-center gap-2 text-sm">
                                 <div className="h-4 w-4 rounded-full bg-emerald-500"></div>
@@ -49,6 +49,10 @@ export default function History({ userSettings }: {userSettings: UserSettings}) 
                             <Badge variant={"outline"} className="flex items-center gap-2 text-sm">
                                 <div className="h-4 w-4 rounded-full bg-rose-500"></div>
                                 Expense
+                            </Badge>
+                            <Badge variant={"outline"} className="flex items-center gap-2 text-sm">
+                                <div className="h-4 w-4 rounded-full bg-blue-500"></div>
+                                Investment
                             </Badge>
                         </div>
                     </CardTitle>
@@ -63,23 +67,28 @@ export default function History({ userSettings }: {userSettings: UserSettings}) 
                                             <stop offset={"0"} stopColor="#10B981" stopOpacity={"1"}/>
                                             <stop offset={"1"} stopColor="#10B981" stopOpacity={"0"}/>
                                         </linearGradient>
-                                        
+
                                         <linearGradient id="expenseBar" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset={"0"} stopColor="#F43F5E" stopOpacity={"1"}/>
                                             <stop offset={"1"} stopColor="#F43F5E" stopOpacity={"0"}/>
                                         </linearGradient>
+
+                                        <linearGradient id="investmentBar" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset={"0"} stopColor="#3B82F6" stopOpacity={"1"}/>
+                                            <stop offset={"1"} stopColor="#3B82F6" stopOpacity={"0"}/>
+                                        </linearGradient>
                                     </defs>
-                                    <CartesianGrid 
-                                        strokeDasharray="5 5" 
-                                        strokeOpacity={"0.2"} 
-                                        vertical={false} 
+                                    <CartesianGrid
+                                        strokeDasharray="5 5"
+                                        strokeOpacity={"0.2"}
+                                        vertical={false}
                                     />
-                                    <XAxis 
-                                        stroke="#888888" 
-                                        fontSize={12} 
-                                        tickLine={false} 
-                                        axisLine={false} 
-                                        padding={{left: 5, right: 5}} 
+                                    <XAxis
+                                        stroke="#888888"
+                                        fontSize={12}
+                                        tickLine={false}
+                                        axisLine={false}
+                                        padding={{left: 5, right: 5}}
                                         dataKey={(data) => {
                                             const {year, month, day} = data;
                                             const date = new Date(year, month, day || 1);
@@ -89,23 +98,30 @@ export default function History({ userSettings }: {userSettings: UserSettings}) 
                                             return date.toLocaleDateString("default", {day: "2-digit"});
                                         }}
                                     />
-                                    <YAxis 
-                                        stroke="#888888" 
-                                        fontSize={12} 
-                                        tickLine={false} 
+                                    <YAxis
+                                        stroke="#888888"
+                                        fontSize={12}
+                                        tickLine={false}
                                         axisLine={false}
                                     />
-                                    <Bar 
+                                    <Bar
                                         dataKey={"income"}
-                                        label="Income" 
+                                        label="Income"
                                         fill="url(#incomeBar)"
                                         radius={4}
                                         className="cursor-pointer"
                                     />
-                                    <Bar 
+                                    <Bar
                                         dataKey={"expense"}
-                                        label="Expense" 
+                                        label="Expense"
                                         fill="url(#expenseBar)"
+                                        radius={4}
+                                        className="cursor-pointer"
+                                    />
+                                    <Bar
+                                        dataKey={"investment"}
+                                        label="Investment"
+                                        fill="url(#investmentBar)"
                                         radius={4}
                                         className="cursor-pointer"
                                     />
@@ -140,13 +156,14 @@ function CustomToolTip({ active, payload, formatter }: any) {
     }
 
     const data = payload[0].payload;
-    const { expense, income } = data;
+    const { expense, income, investment } = data;
 
     return (
         <div className="min-w-[300px] rounded border bg-background p-4">
             <TooltipRow formatter={formatter} label="Expense" value={expense} bgColor="bg-rose-500" textColor="text-rose-500" />
             <TooltipRow formatter={formatter} label="Income" value={income} bgColor="bg-emerald-500" textColor="text-emerald-500" />
-            <TooltipRow formatter={formatter} label="Balance" value={income - expense} bgColor="bg-gray-500" textColor="text-foreground" />
+            <TooltipRow formatter={formatter} label="Investment" value={investment || 0} bgColor="bg-blue-500" textColor="text-blue-500" />
+            <TooltipRow formatter={formatter} label="Balance" value={income - expense - (investment || 0)} bgColor="bg-gray-500" textColor="text-foreground" />
         </div>
     )
 }
@@ -164,12 +181,12 @@ function TooltipRow({ label, value, bgColor, textColor, formatter }: {label: str
                 <p className="text-sm text-muted-foreground">{label}</p>
                 <div className={cn("text-sm font-bold", textColor)}>
                     <CountUp
-                        duration={0.5} 
-                        end={value} 
-                        preserveValue 
-                        decimals={0} 
+                        duration={0.5}
+                        end={value}
+                        preserveValue
+                        decimals={0}
                         formattingFn={formattingFn}
-                        className="text-sm"    
+                        className="text-sm"
                     />
                 </div>
             </div>

@@ -301,7 +301,7 @@ function TopMerchants({
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        {sortedData.slice(0, 6).map((merchant, i) => {
+                        {sortedData.slice(0, 5).map((merchant, i) => {
                             const pct =
                                 ((view === "amount" ? merchant.amount : merchant.count) / maxVal) *
                                 100;

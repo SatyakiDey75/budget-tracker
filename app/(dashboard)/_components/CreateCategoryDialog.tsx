@@ -22,7 +22,7 @@ import { useTheme } from "next-themes";
 
 
 interface Props {
-    type: TransactionType;
+    type: "income" | "expense";
     successCallback: (category: Category) => void;
     trigger?: ReactNode;
 }

@@ -4,6 +4,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import React from "react";
 import CreateTransactionDialog from "./_components/CreateTransactionDialog";
+import CreateInvestmentDialog from "./_components/CreateInvestmentDialog";
 import Overview from "./_components/Overview";
 import History from "./_components/History";
 import BankBalanceHistory from "./_components/BankBalanceHistory";
@@ -38,6 +39,9 @@ export default async function page() {
                         <CreateTransactionDialog trigger={<Button variant={"outline"} className="border-rose-500 bg-rose-950 text-white hover:bg-rose-700 hover:text-white">
                             New Expense 😤
                         </Button>} type="expense" />
+                        <CreateInvestmentDialog trigger={<Button variant={"outline"} className="border-blue-500 bg-blue-950 text-white hover:bg-blue-700 hover:text-white">
+                            New Investment 📈
+                        </Button>} />
                     </div>
                 </div>
             </div>
