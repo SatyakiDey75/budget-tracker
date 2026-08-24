@@ -29,11 +29,12 @@ export async function CreateTransaction(form: CreateTransactionSchemaType) {
         throw new Error("Category not found");
     }
 
-    const bankRow = bankId
+    const isCash = bankId === "cash";
+    const bankRow = bankId && !isCash
         ? await prisma.bank.findFirst({ where: { id: bankId, userId: user.id } })
         : null;
 
-    if (bankId && !bankRow) {
+    if (bankId && !isCash && !bankRow) {
         throw new Error("Bank not found");
     }
 
@@ -47,9 +48,9 @@ export async function CreateTransaction(form: CreateTransactionSchemaType) {
                 type,
                 category: categoryRow.name,
                 categoryIcon: categoryRow.icon,
-                bankId: bankRow?.id,
-                bankName: bankRow?.bankName,
-                accountName: bankRow?.accountName,
+                bankId: bankRow?.id ?? null,
+                bankName: isCash ? "Cash" : (bankRow?.bankName ?? null),
+                accountName: isCash ? null : (bankRow?.accountName ?? null),
                 merchantName: type === "expense" ? (merchantName || null) : null,
             },
         });
@@ -100,7 +101,7 @@ export async function CreateTransaction(form: CreateTransactionSchemaType) {
             },
         });
 
-        if (bankRow) {
+        if (!isCash && bankRow) {
             const isCredit = bankRow.bankName.toLowerCase().includes("credit card");
             if (isCredit) {
                 // Find the parent bank by matching the prefix before "Credit Card"

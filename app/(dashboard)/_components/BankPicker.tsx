@@ -5,7 +5,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useQuery } from "@tanstack/react-query";
 import React, { useCallback, useEffect } from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Banknote, Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getBankLogo } from "@/lib/banks";
 import { TransactionType } from "@/lib/types";
@@ -42,7 +42,7 @@ export default function BankPicker({ onChange, className, ttype, value: initialV
         queryFn: () => fetch("/api/banks").then((res) => res.json()),
     });
 
-    const selectedBank = banksQuery.data?.find((b) => b.id === value);
+    const selectedBank = value === "cash" ? null : banksQuery.data?.find((b) => b.id === value);
 
     const handleSelect = useCallback(
         (bankId: string) => {
@@ -61,23 +61,29 @@ export default function BankPicker({ onChange, className, ttype, value: initialV
                     aria-expanded={open}
                     className={cn("w-[200px] justify-between", className)}
                 >
-                    {selectedBank ? (
+                    {value === "cash" ? (
+                        <CashRow />
+                    ) : selectedBank ? (
                         <BankRow bank={selectedBank} />
                     ) : (
-                        <span className="text-muted-foreground text-sm">Select bank</span>
+                        <span className="text-muted-foreground text-sm">Select source</span>
                     )}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
             <PopoverContent className={cn("w-[220px] p-0", className)} align="start">
                 <Command>
-                    <CommandInput placeholder="Search bank..." />
+                    <CommandInput placeholder="Search..." />
                     <CommandEmpty>
                         <p>No banks found</p>
                         <p className="text-xs text-muted-foreground">Add a bank in Manage</p>
                     </CommandEmpty>
                     <CommandGroup>
                         <CommandList>
+                            <CommandItem key="cash" onSelect={() => handleSelect("cash")}>
+                                <CashRow />
+                                <Check className={cn("ml-auto h-4 w-4 opacity-0", value === "cash" && "opacity-100")} />
+                            </CommandItem>
                             {banksQuery.data?.map((bank) => (ttype === 'expense' || !bank.bankName.toLowerCase().includes('credit card')) && (
                                 <CommandItem key={bank.id} onSelect={() => handleSelect(bank.id)}>
                                     <BankRow bank={bank} />
@@ -94,6 +100,15 @@ export default function BankPicker({ onChange, className, ttype, value: initialV
                 </Command>
             </PopoverContent>
         </Popover>
+    );
+}
+
+function CashRow() {
+    return (
+        <div className="flex items-center gap-2 min-w-0">
+            <Banknote className="h-4 w-4 shrink-0 text-emerald-500" />
+            <span className="text-sm">Cash</span>
+        </div>
     );
 }
 

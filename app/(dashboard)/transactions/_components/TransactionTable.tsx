@@ -64,18 +64,19 @@ const columns: ColumnDef<TransactionHistoryRow>[] = [
             <DataTableColumnHeader column={column} title="Source" />
         ),
         filterFn: (row, _id, value) => {
-            const display = row.original.bankName
-                ? `${row.original.bankName} – ${row.original.accountName}`
-                : "—";
+            const b = row.original;
+            const display = !b.bankName ? "—"
+                : b.bankName === "Cash" ? "Cash"
+                : `${b.bankName} – ${b.accountName}`;
             return value.includes(display);
         },
-        cell: ({ row }) => (
-            <div className="text-muted-foreground">
-                {row.original.bankName
-                    ? `${row.original.bankName} – ${row.original.accountName}`
-                    : "—"}
-            </div>
-        ),
+        cell: ({ row }) => {
+            const b = row.original;
+            const display = !b.bankName ? "—"
+                : b.bankName === "Cash" ? "Cash"
+                : `${b.bankName} – ${b.accountName}`;
+            return <div className="text-muted-foreground">{display}</div>;
+        },
     },
     {
         accessorKey: "merchantName",
@@ -210,7 +211,9 @@ export default function TransactionTable({ from, to }: Props) {
         const seen = new Map<string, { value: string; label: string }>();
         history.data?.forEach((transaction) => {
             if (!transaction.bankName) return;
-            const display = `${transaction.bankName} – ${transaction.accountName}`;
+            const display = transaction.bankName === "Cash"
+                ? "Cash"
+                : `${transaction.bankName} – ${transaction.accountName}`;
             if (!seen.has(display)) {
                 seen.set(display, { value: display, label: display });
             }
@@ -277,9 +280,9 @@ export default function TransactionTable({ from, to }: Props) {
                             category: row.original.category,
                             categoryIcon: row.original.categoryIcon,
                             description: row.original.description,
-                            bank: row.original.bankName
-                                ? `${row.original.bankName} – ${row.original.accountName}`
-                                : "",
+                            bank: !row.original.bankName ? ""
+                                : row.original.bankName === "Cash" ? "Cash"
+                                : `${row.original.bankName} – ${row.original.accountName}`,
                             merchant: (row.original as any).merchantName || "",
                             type: row.original.type,
                             amount: row.original.amount,

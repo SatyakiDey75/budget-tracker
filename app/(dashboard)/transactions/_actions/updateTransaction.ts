@@ -26,10 +26,11 @@ export async function UpdateTransaction(form: UpdateTransactionSchemaType) {
         : null;
     if (type !== "investment" && !categoryRow) throw new Error("Category not found");
 
-    const newBankRow = bankId
+    const newIsCash = bankId === "cash";
+    const newBankRow = bankId && !newIsCash
         ? await prisma.bank.findFirst({ where: { id: bankId, userId: user.id } })
         : null;
-    if (bankId && !newBankRow) throw new Error("Bank not found");
+    if (bankId && !newIsCash && !newBankRow) throw new Error("Bank not found");
 
     const oldBankRow = oldTransaction.bankId
         ? await prisma.bank.findFirst({ where: { id: oldTransaction.bankId, userId: user.id } })
@@ -47,8 +48,8 @@ export async function UpdateTransaction(form: UpdateTransactionSchemaType) {
                 category: type === "investment" ? ("Investment") : categoryRow!.name,
                 categoryIcon: type === "investment" ? "📈" : categoryRow!.icon,
                 bankId: newBankRow?.id ?? null,
-                bankName: newBankRow?.bankName ?? null,
-                accountName: newBankRow?.accountName ?? null,
+                bankName: newIsCash ? "Cash" : (newBankRow?.bankName ?? null),
+                accountName: newIsCash ? null : (newBankRow?.accountName ?? null),
                 merchantName: type === "investment" ? (investmentApp || null) : type === "expense" ? (merchantName || null) : null,
                 investmentApp: type === "investment" ? (investmentApp || null) : null,
             },
@@ -131,15 +132,16 @@ export async function UpdateTransaction(form: UpdateTransactionSchemaType) {
             },
         });
 
-        // 4. Reverse old bank balance (investment deducts like expense)
-        if (oldBankRow) {
+        // 4. Reverse old bank balance (skip if old transaction was cash)
+        const oldIsCash = oldTransaction.bankName === "Cash" && !oldTransaction.bankId;
+        if (!oldIsCash && oldBankRow) {
             await applyBankBalance(tx, user.id, oldBankRow, {
                 increment: oldTransaction.type === "income" ? -oldTransaction.amount : oldTransaction.amount,
             });
         }
 
-        // 5. Apply new bank balance
-        if (newBankRow) {
+        // 5. Apply new bank balance (skip if new source is cash)
+        if (!newIsCash && newBankRow) {
             await applyBankBalance(tx, user.id, newBankRow, {
                 increment: type === "income" ? amount : -amount,
             });

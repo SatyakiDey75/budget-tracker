@@ -14,10 +14,11 @@ export async function CreateInvestment(form: CreateInvestmentSchemaType) {
 
     const { amount, date, description, bankId, investmentApp } = parsedBody.data;
 
-    const bankRow = bankId
+    const isCash = bankId === "cash";
+    const bankRow = bankId && !isCash
         ? await prisma.bank.findFirst({ where: { id: bankId, userId: user.id } })
         : null;
-    if (bankId && !bankRow) throw new Error("Bank not found");
+    if (bankId && !isCash && !bankRow) throw new Error("Bank not found");
 
     await prisma.$transaction(async (tx) => {
         await (tx.transaction as any).create({
@@ -30,8 +31,8 @@ export async function CreateInvestment(form: CreateInvestmentSchemaType) {
                 category: "Investment",
                 categoryIcon: "📈",
                 bankId: bankRow?.id ?? null,
-                bankName: bankRow?.bankName ?? null,
-                accountName: bankRow?.accountName ?? null,
+                bankName: isCash ? "Cash" : (bankRow?.bankName ?? null),
+                accountName: isCash ? null : (bankRow?.accountName ?? null),
                 investmentApp: investmentApp || null,
                 merchantName: investmentApp || null,
             },
@@ -81,7 +82,7 @@ export async function CreateInvestment(form: CreateInvestmentSchemaType) {
             },
         });
 
-        if (bankRow) {
+        if (!isCash && bankRow) {
             const isCredit = bankRow.bankName.toLowerCase().includes("credit card");
             if (isCredit) {
                 const prefix = bankRow.bankName.replace(/\s*credit\s*card.*$/i, "").trim();

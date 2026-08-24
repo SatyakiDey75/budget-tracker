@@ -49,6 +49,10 @@ export default function EditTransactionDialog({ open, setOpen, transaction }: Pr
     const type = transaction.type as "income" | "expense" | "investment";
     const isInvestment = type === "investment";
 
+    const resolvedBankId = !transaction.bankId && transaction.bankName === "Cash"
+        ? "cash"
+        : transaction.bankId ?? undefined;
+
     const form = useForm<UpdateTransactionSchemaType>({
         resolver: zodResolver(UpdateTransactionSchema),
         defaultValues: {
@@ -58,7 +62,7 @@ export default function EditTransactionDialog({ open, setOpen, transaction }: Pr
             description: transaction.description || "",
             date: new Date(transaction.date),
             category: isInvestment ? undefined : transaction.category,
-            bankId: transaction.bankId ?? undefined,
+            bankId: resolvedBankId,
             merchantName: !isInvestment ? ((transaction as any).merchantName ?? undefined) : undefined,
             investmentApp: isInvestment ? ((transaction as any).investmentApp ?? transaction.category) : undefined,
         },
@@ -66,6 +70,9 @@ export default function EditTransactionDialog({ open, setOpen, transaction }: Pr
 
     useEffect(() => {
         if (open) {
+            const bid = !transaction.bankId && transaction.bankName === "Cash"
+                ? "cash"
+                : transaction.bankId ?? undefined;
             form.reset({
                 transactionId: transaction.id,
                 type,
@@ -73,7 +80,7 @@ export default function EditTransactionDialog({ open, setOpen, transaction }: Pr
                 description: transaction.description || "",
                 date: new Date(transaction.date),
                 category: isInvestment ? undefined : transaction.category,
-                bankId: transaction.bankId ?? undefined,
+                bankId: bid,
                 merchantName: !isInvestment ? ((transaction as any).merchantName ?? undefined) : undefined,
                 investmentApp: isInvestment ? ((transaction as any).investmentApp ?? transaction.category) : undefined,
             });
@@ -292,7 +299,7 @@ export default function EditTransactionDialog({ open, setOpen, transaction }: Pr
                                     <FormControl>
                                         <BankPicker
                                             ttype={type}
-                                            value={transaction.bankId ?? undefined}
+                                            value={resolvedBankId}
                                             onChange={handleBankChange}
                                             className="w-full"
                                         />
