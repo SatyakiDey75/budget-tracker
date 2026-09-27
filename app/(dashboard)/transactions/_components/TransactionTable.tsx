@@ -1,7 +1,7 @@
 "use client";
 
 import { GetTransactionHistoryResponseType } from "@/app/api/transactions-history/route";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
     ColumnDef,
     ColumnFiltersState,
@@ -10,6 +10,7 @@ import {
     getFilteredRowModel,
     getPaginationRowModel,
     getSortedRowModel,
+    RowSelectionState,
     SortingState,
     useReactTable,
 } from "@tanstack/react-table"
@@ -29,10 +30,20 @@ import { DataTableFacetedFilter } from "@/components/datatable/FacetedFilters";
 import { DataTableViewOptions } from "@/components/datatable/ColumnToggle";
 import { Button } from "@/components/ui/button";
 import { download, generateCsv, mkConfig } from "export-to-csv";
-import { DownloadIcon, MoreHorizontal, PencilIcon, TrashIcon } from "lucide-react";
+import { DownloadIcon, MoreHorizontal, PencilIcon, SearchIcon, TrashIcon } from "lucide-react";
+import Pagination from "@mui/material/Pagination";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { useTheme } from "next-themes";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import DeleteTransactionDialog from "./DeleteTransactionDialog";
 import EditTransactionDialog from "../../_components/EditTransactionDialog";
+import { DeleteTransaction } from "../_actions/deleteTransaction";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import { toDate } from "date-fns";
 
 interface Props {
@@ -45,6 +56,25 @@ type TransactionHistoryRow = GetTransactionHistoryResponseType[0];
 const emptyData: any[] = [];
 
 const columns: ColumnDef<TransactionHistoryRow>[] = [
+    {
+        id: "select",
+        header: ({ table }) => (
+            <Checkbox
+                checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+                onCheckedChange={(v) => table.toggleAllPageRowsSelected(!!v)}
+                aria-label="Select all"
+            />
+        ),
+        cell: ({ row }) => (
+            <Checkbox
+                checked={row.getIsSelected()}
+                onCheckedChange={(v) => row.toggleSelected(!!v)}
+                aria-label="Select row"
+            />
+        ),
+        enableSorting: false,
+        enableHiding: false,
+    },
     {
         accessorKey: "category",
         header: ({ column }) => (
@@ -97,6 +127,8 @@ const columns: ColumnDef<TransactionHistoryRow>[] = [
         header: ({ column }) => (
             <DataTableColumnHeader column={column} title="Description" />
         ),
+        filterFn: (row, id, value) =>
+            String(row.getValue(id)).toLowerCase().includes(String(value).toLowerCase()),
         cell: ({ row }) => (
             <div className="capitalize">{row.original.description}</div>
         ),
@@ -164,6 +196,13 @@ export default function TransactionTable({ from, to }: Props) {
 
     const [sorting, setSorting] = useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+    const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+
+    const { resolvedTheme } = useTheme();
+    const muiTheme = createTheme({ palette: { mode: resolvedTheme === "dark" ? "dark" : "light" } });
+
+    const router = useRouter();
+    const queryClient = useQueryClient();
 
     const history = useQuery<GetTransactionHistoryResponseType>({
         queryKey: ["transactions", "history", from, to],
@@ -179,6 +218,7 @@ export default function TransactionTable({ from, to }: Props) {
         data: history.data || emptyData,
         columns,
         getCoreRowModel: getCoreRowModel(),
+        enableRowSelection: true,
         initialState: {
             pagination: {
                 pageSize: 10,
@@ -187,12 +227,34 @@ export default function TransactionTable({ from, to }: Props) {
         state: {
             sorting,
             columnFilters,
+            rowSelection,
         },
         onSortingChange: setSorting,
         getSortedRowModel: getSortedRowModel(),
         onColumnFiltersChange: setColumnFilters,
         getFilteredRowModel: getFilteredRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
+        onRowSelectionChange: setRowSelection,
+    });
+
+    const selectedRows = table.getSelectedRowModel().rows.map((r) => r.original);
+    const selectedCount = selectedRows.length;
+    const selectedNet = selectedRows.reduce((acc, t) =>
+        acc + (t.type === "income" ? t.amount : -t.amount), 0);
+
+    const { mutate: bulkDelete, isPending: isBulkDeleting } = useMutation({
+        mutationFn: async (ids: string[]) => {
+            for (const id of ids) await DeleteTransaction(id);
+        },
+        onSuccess: () => {
+            toast.success("Selected transactions deleted");
+            setRowSelection({});
+            queryClient.invalidateQueries({ queryKey: ["transactions"] });
+            queryClient.invalidateQueries({ queryKey: ["overview"] });
+            queryClient.invalidateQueries({ queryKey: ["bank-history"] });
+            router.refresh();
+        },
+        onError: () => toast.error("Failed to delete some transactions"),
     });
 
     const categoriesOptions = useMemo(() => {
@@ -272,8 +334,19 @@ export default function TransactionTable({ from, to }: Props) {
                             column={table.getColumn("merchantName")}
                         />
                     )}
+
+                    <div className="relative ml-2">
+                        <SearchIcon className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            placeholder="Search transaction..."
+                            value={(table.getColumn("description")?.getFilterValue() as string) ?? ""}
+                            onChange={(e) => table.getColumn("description")?.setFilterValue(e.target.value)}
+                            className="h-8 min-w-[200px] md:w-[400px] lg:w-[700px] pl-8 text-sm"
+                        />
+                    </div>
                 </div>
-                
+
+
                 <div className="flex flex-wrap gap-2">
                     <Button variant={"outline"} size={"sm"} className="ml-auto h-8 lg:flex" onClick={() => {
                         const data = table.getFilteredRowModel().rows.map((row) => ({
@@ -297,6 +370,78 @@ export default function TransactionTable({ from, to }: Props) {
                     <DataTableViewOptions table={table} />
                 </div>
             </div>
+            {selectedCount > 0 && (
+                <div className="flex items-center justify-between rounded-lg border border-blue-500/30 bg-blue-500/5 px-4 py-2 mb-2">
+                    <div className="flex items-center gap-4">
+                        <span className="text-sm font-medium text-muted-foreground">
+                            {selectedCount} row{selectedCount !== 1 ? "s" : ""} selected
+                        </span>
+                        <span className={cn(
+                            "text-sm font-semibold",
+                            selectedNet >= 0 ? "text-emerald-500" : "text-rose-500"
+                        )}>
+                            Net: {selectedNet >= 0 ? "+" : ""}{selectedNet.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={() => {
+                                const data = selectedRows.map((row) => ({
+                                    category: row.category,
+                                    categoryIcon: row.categoryIcon,
+                                    description: row.description,
+                                    bank: !row.bankName ? ""
+                                        : row.bankName === "Cash" ? "Cash"
+                                        : `${row.bankName} – ${row.accountName}`,
+                                    merchant: (row as any).merchantName || "",
+                                    type: row.type,
+                                    amount: row.amount,
+                                    formattedAmount: row.formattedAmount,
+                                    date: row.date,
+                                }));
+                                handleExportCSV(data);
+                            }}
+                        >
+                            <DownloadIcon className="mr-1 h-3 w-3" />
+                            Export selected
+                        </Button>
+
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="destructive" size="sm" className="h-7 text-xs" disabled={isBulkDeleting}>
+                                    <TrashIcon className="mr-1 h-3 w-3" />
+                                    Delete {selectedCount}
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete {selectedCount} transaction{selectedCount !== 1 ? "s" : ""}?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This will permanently remove the selected transactions and reverse their effect on your balances and history. This cannot be undone.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                        onClick={() => bulkDelete(selectedRows.map((r) => r.id))}
+                                    >
+                                        Delete
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+
+                        <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setRowSelection({})}>
+                            Clear
+                        </Button>
+                    </div>
+                </div>
+            )}
+
             <SkeletonWrapper isLoading={history.isLoading}>
                 <div className="rounded-md border">
                     <Table>
@@ -342,27 +487,43 @@ export default function TransactionTable({ from, to }: Props) {
                         </TableBody>
                     </Table>
                 </div>
-                <div className="flex items-center justify-end space-x-2 py-4">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => table.previousPage()}
-                        disabled={!table.getCanPreviousPage()}
-                    >
-                        Previous
-                    </Button>
-                    <span className="text-sm text-muted-foreground px-2">
-                        Page {table.getState().pagination.pageIndex + 1} of{" "}
-                        {table.getPageCount()}
-                    </span>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => table.nextPage()}
-                        disabled={!table.getCanNextPage()}
-                    >
-                        Next
-                    </Button>
+                <div className="flex items-center justify-between py-4">
+                    {/* Left: page-size selector + record count */}
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <span>Showing</span>
+                        <Select
+                            value={String(table.getState().pagination.pageSize)}
+                            onValueChange={(v) => {
+                                table.setPageSize(Number(v));
+                                table.setPageIndex(0);
+                            }}
+                        >
+                            <SelectTrigger className="h-8 w-[70px]">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {(() => {
+                                    const total = table.getFilteredRowModel().rows.length;
+                                    const steps = [10, 20, 30, 40, 50].filter((s) => s < total);
+                                    return [...steps, total].map((s) => (
+                                        <SelectItem key={s} value={String(s)}>{s}</SelectItem>
+                                    ));
+                                })()}
+                            </SelectContent>
+                        </Select>
+                        <span>of {table.getFilteredRowModel().rows.length} records</span>
+                    </div>
+
+                    {/* Right: MUI numbered pagination */}
+                    <ThemeProvider theme={muiTheme}>
+                        <Pagination
+                            count={table.getPageCount()}
+                            page={table.getState().pagination.pageIndex + 1}
+                            onChange={(_, value) => table.setPageIndex(value - 1)}
+                            variant="outlined"
+                            shape="rounded"
+                        />
+                    </ThemeProvider>
                 </div>
             </SkeletonWrapper>
         </div>
