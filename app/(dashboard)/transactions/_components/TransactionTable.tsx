@@ -138,7 +138,7 @@ const columns: ColumnDef<TransactionHistoryRow>[] = [
         header: "Date",
         cell: ({ row }) => {
             const date = new Date(row.original.date);
-            const formattedDate = date.toLocaleDateString("default", {
+            const formattedDate = date.toLocaleDateString("en-GB", {
                 timeZone: "IST",
                 year: "numeric",
                 month: "2-digit",
