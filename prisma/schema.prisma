@@ -84,3 +84,15 @@ model YearHistory {
   @@unique([month, year, userId])
 }
 
+model BankDayHistory {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String
+  bankId    String   @db.ObjectId
+  day       Int
+  month     Int
+  year      Int
+  netChange Float    @default(0)
+
+  @@unique([userId, bankId, day, month, year])
+}
+

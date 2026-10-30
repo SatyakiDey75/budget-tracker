@@ -98,12 +98,22 @@ export async function CreateInvestment(form: CreateInvestmentSchemaType) {
                             where: { id: parentBank.id, userId: user.id },
                             data: { balance: { increment: -amount } },
                         });
+                        await (tx as any).bankDayHistory.upsert({
+                            where: { userId_bankId_day_month_year: { userId: user.id, bankId: parentBank.id, day: date.getUTCDate(), month: date.getUTCMonth(), year: date.getUTCFullYear() } },
+                            create: { userId: user.id, bankId: parentBank.id, day: date.getUTCDate(), month: date.getUTCMonth(), year: date.getUTCFullYear(), netChange: -amount },
+                            update: { netChange: { increment: -amount } },
+                        });
                     }
                 }
             } else {
                 await tx.bank.update({
                     where: { id: bankRow.id, userId: user.id },
                     data: { balance: { increment: -amount } },
+                });
+                await (tx as any).bankDayHistory.upsert({
+                    where: { userId_bankId_day_month_year: { userId: user.id, bankId: bankRow.id, day: date.getUTCDate(), month: date.getUTCMonth(), year: date.getUTCFullYear() } },
+                    create: { userId: user.id, bankId: bankRow.id, day: date.getUTCDate(), month: date.getUTCMonth(), year: date.getUTCFullYear(), netChange: -amount },
+                    update: { netChange: { increment: -amount } },
                 });
             }
         }

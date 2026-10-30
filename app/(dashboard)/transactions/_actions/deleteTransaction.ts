@@ -77,6 +77,11 @@ export async function DeleteTransaction(id: string) {
                                 },
                             },
                         });
+                        await (tx as any).bankDayHistory.upsert({
+                            where: { userId_bankId_day_month_year: { userId: user.id, bankId: parentBank.id, day: transaction.date.getUTCDate(), month: transaction.date.getUTCMonth(), year: transaction.date.getUTCFullYear() } },
+                            create: { userId: user.id, bankId: parentBank.id, day: transaction.date.getUTCDate(), month: transaction.date.getUTCMonth(), year: transaction.date.getUTCFullYear(), netChange: transaction.type === "income" ? -transaction.amount : transaction.amount },
+                            update: { netChange: { increment: transaction.type === "income" ? -transaction.amount : transaction.amount } },
+                        });
                     }
                 }
             } else {
@@ -87,6 +92,11 @@ export async function DeleteTransaction(id: string) {
                             increment: transaction.type === "income" ? -transaction.amount : transaction.amount,
                         },
                     },
+                });
+                await (tx as any).bankDayHistory.upsert({
+                    where: { userId_bankId_day_month_year: { userId: user.id, bankId: transaction.bankId, day: transaction.date.getUTCDate(), month: transaction.date.getUTCMonth(), year: transaction.date.getUTCFullYear() } },
+                    create: { userId: user.id, bankId: transaction.bankId, day: transaction.date.getUTCDate(), month: transaction.date.getUTCMonth(), year: transaction.date.getUTCFullYear(), netChange: transaction.type === "income" ? -transaction.amount : transaction.amount },
+                    update: { netChange: { increment: transaction.type === "income" ? -transaction.amount : transaction.amount } },
                 });
             }
         }

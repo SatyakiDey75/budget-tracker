@@ -118,12 +118,22 @@ export async function CreateTransaction(form: CreateTransactionSchemaType) {
                             where: { id: parentBank.id, userId: user.id },
                             data: { balance: { increment: type === "income" ? amount : -amount } },
                         });
+                        await (tx as any).bankDayHistory.upsert({
+                            where: { userId_bankId_day_month_year: { userId: user.id, bankId: parentBank.id, day: date.getUTCDate(), month: date.getUTCMonth(), year: date.getUTCFullYear() } },
+                            create: { userId: user.id, bankId: parentBank.id, day: date.getUTCDate(), month: date.getUTCMonth(), year: date.getUTCFullYear(), netChange: type === "income" ? amount : -amount },
+                            update: { netChange: { increment: type === "income" ? amount : -amount } },
+                        });
                     }
                 }
             } else {
                 await tx.bank.update({
                     where: { id: bankRow.id, userId: user.id },
                     data: { balance: { increment: type === "income" ? amount : -amount } },
+                });
+                await (tx as any).bankDayHistory.upsert({
+                    where: { userId_bankId_day_month_year: { userId: user.id, bankId: bankRow.id, day: date.getUTCDate(), month: date.getUTCMonth(), year: date.getUTCFullYear() } },
+                    create: { userId: user.id, bankId: bankRow.id, day: date.getUTCDate(), month: date.getUTCMonth(), year: date.getUTCFullYear(), netChange: type === "income" ? amount : -amount },
+                    update: { netChange: { increment: type === "income" ? amount : -amount } },
                 });
             }
         }
