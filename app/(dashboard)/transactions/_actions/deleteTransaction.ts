@@ -57,48 +57,16 @@ export async function DeleteTransaction(id: string) {
             },
         });
 
-        if (transaction.bankId && transaction.bankName) {
-            const isCredit = transaction.bankName.toLowerCase().includes("credit card");
-            if (isCredit) {
-                const prefix = transaction.bankName.replace(/\s*credit\s*card.*$/i, "").trim();
-                if (prefix) {
-                    const allBanks = await tx.bank.findMany({ where: { userId: user.id } });
-                    const parentBank = allBanks.find(
-                        (b) =>
-                            !b.bankName.toLowerCase().includes("credit card") &&
-                            b.bankName.toLowerCase().includes(prefix.toLowerCase())
-                    );
-                    if (parentBank) {
-                        await tx.bank.update({
-                            where: { id: parentBank.id, userId: user.id },
-                            data: {
-                                balance: {
-                                    increment: transaction.type === "income" ? -transaction.amount : transaction.amount,
-                                },
-                            },
-                        });
-                        await (tx as any).bankDayHistory.upsert({
-                            where: { userId_bankId_day_month_year: { userId: user.id, bankId: parentBank.id, day: transaction.date.getUTCDate(), month: transaction.date.getUTCMonth(), year: transaction.date.getUTCFullYear() } },
-                            create: { userId: user.id, bankId: parentBank.id, day: transaction.date.getUTCDate(), month: transaction.date.getUTCMonth(), year: transaction.date.getUTCFullYear(), netChange: transaction.type === "income" ? -transaction.amount : transaction.amount },
-                            update: { netChange: { increment: transaction.type === "income" ? -transaction.amount : transaction.amount } },
-                        });
-                    }
-                }
-            } else {
-                await tx.bank.update({
-                    where: { id: transaction.bankId, userId: user.id },
-                    data: {
-                        balance: {
-                            increment: transaction.type === "income" ? -transaction.amount : transaction.amount,
-                        },
-                    },
-                });
-                await (tx as any).bankDayHistory.upsert({
-                    where: { userId_bankId_day_month_year: { userId: user.id, bankId: transaction.bankId, day: transaction.date.getUTCDate(), month: transaction.date.getUTCMonth(), year: transaction.date.getUTCFullYear() } },
-                    create: { userId: user.id, bankId: transaction.bankId, day: transaction.date.getUTCDate(), month: transaction.date.getUTCMonth(), year: transaction.date.getUTCFullYear(), netChange: transaction.type === "income" ? -transaction.amount : transaction.amount },
-                    update: { netChange: { increment: transaction.type === "income" ? -transaction.amount : transaction.amount } },
-                });
-            }
+        if (transaction.bankId) {
+            await tx.bank.update({
+                where: { id: transaction.bankId, userId: user.id },
+                data: { balance: { increment: transaction.type === "income" ? -transaction.amount : transaction.amount } },
+            });
+            await (tx as any).bankDayHistory.upsert({
+                where: { userId_bankId_day_month_year: { userId: user.id, bankId: transaction.bankId, day: transaction.date.getUTCDate(), month: transaction.date.getUTCMonth(), year: transaction.date.getUTCFullYear() } },
+                create: { userId: user.id, bankId: transaction.bankId, day: transaction.date.getUTCDate(), month: transaction.date.getUTCMonth(), year: transaction.date.getUTCFullYear(), netChange: transaction.type === "income" ? -transaction.amount : transaction.amount },
+                update: { netChange: { increment: transaction.type === "income" ? -transaction.amount : transaction.amount } },
+            });
         }
     });
 }

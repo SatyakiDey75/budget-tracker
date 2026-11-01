@@ -75,7 +75,7 @@ async function getBankHistoryData(userId: string, timeFrame: TimeFrame, period: 
 
             for (const bank of bankData) {
                 if (slotEnd < new Date(bank.createdAt)) {
-                    slot[bank.id] = 0;
+                    // bank didn't exist yet — omit the data point so Recharts renders a gap
                     continue;
                 }
                 const net = bank.history
@@ -103,7 +103,7 @@ async function getBankHistoryData(userId: string, timeFrame: TimeFrame, period: 
 
             for (const bank of bankData) {
                 if (slotEnd < new Date(bank.createdAt)) {
-                    slot[bank.id] = 0;
+                    // bank didn't exist yet — omit the data point so Recharts renders a gap
                     continue;
                 }
                 const net = bank.history
@@ -126,41 +126,27 @@ async function getBankHistoryData(userId: string, timeFrame: TimeFrame, period: 
 }
 
 // One-time seeding: builds BankDayHistory from all existing transactions.
-// Handles CC parent mapping so history is stored under the effective bank.
-async function seedBankDayHistory(userId: string, banks: { id: string; bankName: string }[]) {
+async function seedBankDayHistory(userId: string, banks: { id: string }[]) {
     const bankIds = banks.map((b) => b.id);
-
-    const ccToParentId = new Map<string, string>();
-    for (const cc of banks.filter((b) => b.bankName.toLowerCase().includes("credit card"))) {
-        const prefix = cc.bankName.replace(/\s*credit\s*card.*$/i, "").trim().toLowerCase();
-        const parent = banks.find(
-            (b) => !b.bankName.toLowerCase().includes("credit card") && b.bankName.toLowerCase().includes(prefix)
-        );
-        if (parent) ccToParentId.set(cc.id, parent.id);
-    }
 
     const transactions = await prisma.transaction.findMany({
         where: { userId, bankId: { in: bankIds } },
-        select: { bankId: true, bankName: true, date: true, amount: true, type: true },
+        select: { bankId: true, date: true, amount: true, type: true },
     });
 
     const dayChanges = new Map<string, { bankId: string; day: number; month: number; year: number; netChange: number }>();
 
     for (const tx of transactions) {
         if (!tx.bankId) continue;
-        const isCC = tx.bankName?.toLowerCase().includes("credit card") ?? false;
-        const effectiveBankId = isCC ? (ccToParentId.get(tx.bankId) ?? null) : tx.bankId;
-        if (!effectiveBankId) continue;
-
         const d = new Date(tx.date);
-        const key = `${effectiveBankId}|${d.getUTCDate()}|${d.getUTCMonth()}|${d.getUTCFullYear()}`;
+        const key = `${tx.bankId}|${d.getUTCDate()}|${d.getUTCMonth()}|${d.getUTCFullYear()}`;
         const change = tx.type === "income" ? tx.amount : -tx.amount;
 
         if (dayChanges.has(key)) {
             dayChanges.get(key)!.netChange += change;
         } else {
             dayChanges.set(key, {
-                bankId: effectiveBankId,
+                bankId: tx.bankId,
                 day: d.getUTCDate(),
                 month: d.getUTCMonth(),
                 year: d.getUTCFullYear(),

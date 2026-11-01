@@ -16,6 +16,8 @@ interface BankRecord {
     branch: string;
     accountName: string;
     balance: number;
+    isCredit: boolean;
+    limit: number;
 }
 
 interface Props {
@@ -52,6 +54,9 @@ export default function BankPicker({ onChange, className, ttype, value: initialV
         []
     );
 
+    const regularBanks = banksQuery.data?.filter((b) => !b.isCredit) ?? [];
+    const creditCards = banksQuery.data?.filter((b) => b.isCredit) ?? [];
+
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
@@ -64,7 +69,7 @@ export default function BankPicker({ onChange, className, ttype, value: initialV
                     {value === "cash" ? (
                         <CashRow />
                     ) : selectedBank ? (
-                        <BankRow bank={selectedBank} />
+                        selectedBank.isCredit ? <CardRow bank={selectedBank} /> : <BankRow bank={selectedBank} />
                     ) : (
                         <span className="text-muted-foreground text-sm">Select source</span>
                     )}
@@ -78,25 +83,30 @@ export default function BankPicker({ onChange, className, ttype, value: initialV
                         <p>No banks found</p>
                         <p className="text-xs text-muted-foreground">Add a bank in Manage</p>
                     </CommandEmpty>
-                    <CommandGroup>
-                        <CommandList>
+                    <CommandList>
+                        <CommandGroup heading="Accounts">
                             <CommandItem key="cash" onSelect={() => handleSelect("cash")}>
                                 <CashRow />
                                 <Check className={cn("ml-auto h-4 w-4 opacity-0", value === "cash" && "opacity-100")} />
                             </CommandItem>
-                            {banksQuery.data?.map((bank) => (ttype === 'expense' || !bank.bankName.toLowerCase().includes('credit card')) && (
+                            {regularBanks.map((bank) => (
                                 <CommandItem key={bank.id} onSelect={() => handleSelect(bank.id)}>
                                     <BankRow bank={bank} />
-                                    <Check
-                                        className={cn(
-                                            "ml-auto h-4 w-4 opacity-0",
-                                            value === bank.id && "opacity-100"
-                                        )}
-                                    />
+                                    <Check className={cn("ml-auto h-4 w-4 opacity-0", value === bank.id && "opacity-100")} />
                                 </CommandItem>
                             ))}
-                        </CommandList>
-                    </CommandGroup>
+                        </CommandGroup>
+                        {ttype !== "income" && creditCards.length > 0 && (
+                            <CommandGroup heading="Credit Cards">
+                                {creditCards.map((bank) => (
+                                    <CommandItem key={bank.id} onSelect={() => handleSelect(bank.id)}>
+                                        <CardRow bank={bank} />
+                                        <Check className={cn("ml-auto h-4 w-4 opacity-0", value === bank.id && "opacity-100")} />
+                                    </CommandItem>
+                                ))}
+                            </CommandGroup>
+                        )}
+                    </CommandList>
                 </Command>
             </PopoverContent>
         </Popover>
@@ -113,6 +123,19 @@ function CashRow() {
 }
 
 function BankRow({ bank }: { bank: BankRecord }) {
+    return (
+        <div className="flex items-center gap-2 min-w-0">
+            <img
+                src={getBankLogo(bank.bankName)}
+                alt={bank.bankName}
+                className="h-4 w-4 object-contain rounded shrink-0"
+            />
+            <span className="truncate text-sm">{bank.bankName} – {bank.accountName}</span>
+        </div>
+    );
+}
+
+function CardRow({ bank }: { bank: BankRecord }) {
     return (
         <div className="flex items-center gap-2 min-w-0">
             <img

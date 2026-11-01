@@ -35,6 +35,7 @@ async function getBalancedStats(userId: string, from: Date, to: Date) {
         by: ["type"],
         where: {
             userId,
+            category: { not: "CC Bill Payment" },
             date: {
                 gte: from,
                 lte: to,

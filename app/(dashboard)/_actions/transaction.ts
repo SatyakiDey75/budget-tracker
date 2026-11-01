@@ -102,40 +102,15 @@ export async function CreateTransaction(form: CreateTransactionSchemaType) {
         });
 
         if (!isCash && bankRow) {
-            const isCredit = bankRow.bankName.toLowerCase().includes("credit card");
-            if (isCredit) {
-                // Find the parent bank by matching the prefix before "Credit Card"
-                const prefix = bankRow.bankName.replace(/\s*credit\s*card.*$/i, "").trim();
-                if (prefix) {
-                    const allBanks = await tx.bank.findMany({ where: { userId: user.id } });
-                    const parentBank = allBanks.find(
-                        (b) =>
-                            !b.bankName.toLowerCase().includes("credit card") &&
-                            (prefix.toLowerCase() === 'pnb' ? b.bankName.toLowerCase().includes('punjab') : prefix.toLowerCase() === 'sbi' ? b.bankName.toLowerCase().includes('state') : b.bankName.toLowerCase().includes('hdfc'))
-                    );
-                    if (parentBank) {
-                        await tx.bank.update({
-                            where: { id: parentBank.id, userId: user.id },
-                            data: { balance: { increment: type === "income" ? amount : -amount } },
-                        });
-                        await (tx as any).bankDayHistory.upsert({
-                            where: { userId_bankId_day_month_year: { userId: user.id, bankId: parentBank.id, day: date.getUTCDate(), month: date.getUTCMonth(), year: date.getUTCFullYear() } },
-                            create: { userId: user.id, bankId: parentBank.id, day: date.getUTCDate(), month: date.getUTCMonth(), year: date.getUTCFullYear(), netChange: type === "income" ? amount : -amount },
-                            update: { netChange: { increment: type === "income" ? amount : -amount } },
-                        });
-                    }
-                }
-            } else {
-                await tx.bank.update({
-                    where: { id: bankRow.id, userId: user.id },
-                    data: { balance: { increment: type === "income" ? amount : -amount } },
-                });
-                await (tx as any).bankDayHistory.upsert({
-                    where: { userId_bankId_day_month_year: { userId: user.id, bankId: bankRow.id, day: date.getUTCDate(), month: date.getUTCMonth(), year: date.getUTCFullYear() } },
-                    create: { userId: user.id, bankId: bankRow.id, day: date.getUTCDate(), month: date.getUTCMonth(), year: date.getUTCFullYear(), netChange: type === "income" ? amount : -amount },
-                    update: { netChange: { increment: type === "income" ? amount : -amount } },
-                });
-            }
+            await tx.bank.update({
+                where: { id: bankRow.id, userId: user.id },
+                data: { balance: { increment: type === "income" ? amount : -amount } },
+            });
+            await (tx as any).bankDayHistory.upsert({
+                where: { userId_bankId_day_month_year: { userId: user.id, bankId: bankRow.id, day: date.getUTCDate(), month: date.getUTCMonth(), year: date.getUTCFullYear() } },
+                create: { userId: user.id, bankId: bankRow.id, day: date.getUTCDate(), month: date.getUTCMonth(), year: date.getUTCFullYear(), netChange: type === "income" ? amount : -amount },
+                update: { netChange: { increment: type === "income" ? amount : -amount } },
+            });
         }
     });
 }

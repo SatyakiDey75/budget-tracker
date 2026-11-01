@@ -154,62 +154,25 @@ export async function UpdateTransaction(form: UpdateTransactionSchemaType) {
 async function applyBankBalance(
     tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
     userId: string,
-    bankRow: { id: string; bankName: string },
+    bankRow: { id: string },
     data: { increment: number }
 ) {
-    const isCredit = bankRow.bankName.toLowerCase().includes("credit card");
-    if (isCredit) {
-        const prefix = bankRow.bankName.replace(/\s*credit\s*card.*$/i, "").trim();
-        if (!prefix) return;
-        const allBanks = await tx.bank.findMany({ where: { userId } });
-        const parentBank = allBanks.find(
-            (b) =>
-                !b.bankName.toLowerCase().includes("credit card") &&
-                b.bankName.toLowerCase().includes(prefix.toLowerCase())
-        );
-        if (parentBank) {
-            await tx.bank.update({
-                where: { id: parentBank.id, userId },
-                data: { balance: data },
-            });
-        }
-    } else {
-        await tx.bank.update({
-            where: { id: bankRow.id, userId },
-            data: { balance: data },
-        });
-    }
+    await tx.bank.update({
+        where: { id: bankRow.id, userId },
+        data: { balance: data },
+    });
 }
 
 async function applyBankDayHistory(
     tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
     userId: string,
-    bankRow: { id: string; bankName: string },
+    bankRow: { id: string },
     date: Date,
     netChange: number
 ) {
-    const isCredit = bankRow.bankName.toLowerCase().includes("credit card");
-    if (isCredit) {
-        const prefix = bankRow.bankName.replace(/\s*credit\s*card.*$/i, "").trim();
-        if (!prefix) return;
-        const allBanks = await tx.bank.findMany({ where: { userId } });
-        const parentBank = allBanks.find(
-            (b) =>
-                !b.bankName.toLowerCase().includes("credit card") &&
-                b.bankName.toLowerCase().includes(prefix.toLowerCase())
-        );
-        if (parentBank) {
-            await (tx as any).bankDayHistory.upsert({
-                where: { userId_bankId_day_month_year: { userId, bankId: parentBank.id, day: date.getUTCDate(), month: date.getUTCMonth(), year: date.getUTCFullYear() } },
-                create: { userId, bankId: parentBank.id, day: date.getUTCDate(), month: date.getUTCMonth(), year: date.getUTCFullYear(), netChange },
-                update: { netChange: { increment: netChange } },
-            });
-        }
-    } else {
-        await (tx as any).bankDayHistory.upsert({
-            where: { userId_bankId_day_month_year: { userId, bankId: bankRow.id, day: date.getUTCDate(), month: date.getUTCMonth(), year: date.getUTCFullYear() } },
-            create: { userId, bankId: bankRow.id, day: date.getUTCDate(), month: date.getUTCMonth(), year: date.getUTCFullYear(), netChange },
-            update: { netChange: { increment: netChange } },
-        });
-    }
+    await (tx as any).bankDayHistory.upsert({
+        where: { userId_bankId_day_month_year: { userId, bankId: bankRow.id, day: date.getUTCDate(), month: date.getUTCMonth(), year: date.getUTCFullYear() } },
+        create: { userId, bankId: bankRow.id, day: date.getUTCDate(), month: date.getUTCMonth(), year: date.getUTCFullYear(), netChange },
+        update: { netChange: { increment: netChange } },
+    });
 }

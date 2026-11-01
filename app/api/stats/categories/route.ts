@@ -34,6 +34,7 @@ async function getCategoryStats(userId: string, from: Date, to: Date) {
         by: ["type", "category", "categoryIcon"],
         where: {
             userId,
+            category: { not: "CC Bill Payment" },
             date: {
                 gte: from,
                 lte: to,

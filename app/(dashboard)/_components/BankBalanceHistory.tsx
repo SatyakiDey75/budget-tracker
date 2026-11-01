@@ -135,7 +135,7 @@ export default function BankBalanceHistory({ userSettings }: { userSettings: Use
                                                     backgroundColor: BANK_COLORS[i % BANK_COLORS.length],
                                                 }}
                                             />
-                                            {bank.bankName}
+                                            {Number.isInteger(Number(bank.accountName)) ? `${bank.bankName}` : `${bank.accountName}`}
                                         </Badge>
                                     );
                                 })}
@@ -242,7 +242,7 @@ export default function BankBalanceHistory({ userSettings }: { userSettings: Use
                                                     key={bank.id}
                                                     type="monotone"
                                                     dataKey={bank.id}
-                                                    name={`${bank.bankName} – ${bank.accountName}`}
+                                                    name={Number.isInteger(Number(bank.accountName)) ? `${bank.bankName} – ${bank.accountName}` : `${bank.accountName}`}
                                                     stroke={BANK_COLORS[originalIndex % BANK_COLORS.length]}
                                                     strokeWidth={2}
                                                     dot={false}
@@ -321,7 +321,7 @@ function BankTooltip({
                         />
                         <div className="flex w-full justify-between gap-4">
                             <p className={cn("text-sm text-muted-foreground truncate max-w-[130px]")}>
-                                {bank.bankName} – {bank.accountName}
+                                {Number.isInteger(Number(bank.accountName)) ? `${bank.bankName} – ${bank.accountName}` : `${bank.accountName}`}
                             </p>
                             <span
                                 className="text-sm font-bold shrink-0"

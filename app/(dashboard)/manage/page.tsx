@@ -4,11 +4,13 @@ import { CurrencyComboBox } from "@/components/CurrencyComboBox";
 import SkeletonWrapper from "@/components/SkeletonWrapper";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
-import { Landmark, PlusSquare, TrashIcon, TrendingDown, TrendingUp } from "lucide-react";
+import { CreditCard, Landmark, PlusSquare, TrashIcon, TrendingDown, TrendingUp } from "lucide-react";
 import React from "react";
 import CreateCategoryDialog from "../_components/CreateCategoryDialog";
 import CreateBankDialog from "../_components/CreateBankDialog";
 import BankDetailsDialog from "../_components/BankDetailsDialog";
+import CreateCardDialog from "../_components/CreateCardDialog";
+import CardDetailsDialog from "../_components/CardDetailsDialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -23,6 +25,8 @@ interface BankRecord {
     branch: string;
     accountName: string;
     balance: number;
+    isCredit: boolean;
+    limit: number;
 }
 
 export default function page() {
@@ -48,6 +52,7 @@ export default function page() {
                     </CardContent>
                 </Card>
                 <BankList />
+                <CardList />
                 <CategoryList type="income" />
                 <CategoryList type="expense" />
             </div>
@@ -108,7 +113,7 @@ function BankList() {
 
                 {dataAvailable && (
                     <div className="grid grid-flow-row gap-4 p-6 sm:grid-flow-row sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                        {banksQuery.data.map((bank) => !bank.bankName.includes('Credit Card') && (
+                        {banksQuery.data.filter((b) => !b.isCredit).map((bank) => (
                             <BankCard key={bank.id} bank={bank} formatter={formatter} />
                         ))}
                     </div>
@@ -139,6 +144,110 @@ function BankCard({ bank, formatter }: { bank: BankRecord; formatter: Intl.Numbe
                     <span className="text-sm font-semibold">
                         {formatter ? formatter.format(bank.balance) : bank.balance.toLocaleString()}
                     </span>
+                </div>
+            </div>
+        </>
+    );
+}
+
+function CardList() {
+    const banksQuery = useQuery<BankRecord[]>({
+        queryKey: ["banks"],
+        queryFn: () => fetch("/api/banks").then((res) => res.json()),
+    });
+
+    const settingsQuery = useQuery({
+        queryKey: ["user-settings"],
+        queryFn: () => fetch("/api/user-settings").then((res) => res.json()),
+    });
+
+    const formatter = settingsQuery.data?.currency
+        ? GetFormatterForCurrency(settingsQuery.data.currency)
+        : null;
+
+    const cards = banksQuery.data?.filter((b) => b.isCredit) ?? [];
+
+    return (
+        <SkeletonWrapper isLoading={banksQuery.isLoading}>
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                            <CreditCard className="h-12 w-12 items-center rounded-lg bg-violet-400/10 p-2 text-violet-500" />
+                            <div className="ml-2">
+                                Cards
+                                <div className="text-sm font-normal text-muted-foreground">
+                                    Your credit cards
+                                </div>
+                            </div>
+                        </div>
+                        <CreateCardDialog
+                            trigger={
+                                <Button className="gap-2 text-sm">
+                                    <PlusSquare className="h-4 w-4" />
+                                    Add Card
+                                </Button>
+                            }
+                        />
+                    </CardTitle>
+                </CardHeader>
+
+                <Separator />
+
+                {cards.length === 0 && (
+                    <div className="flex h-40 w-full items-center flex-col justify-center">
+                        <p>No credit cards yet</p>
+                        <p className="text-sm text-muted-foreground">Add one to get started</p>
+                    </div>
+                )}
+
+                {cards.length > 0 && (
+                    <div className="grid grid-flow-row gap-4 p-6 sm:grid-flow-row sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                        {cards.map((card) => (
+                            <CreditCardCard key={card.id} card={card} formatter={formatter} />
+                        ))}
+                    </div>
+                )}
+            </Card>
+        </SkeletonWrapper>
+    );
+}
+
+function CreditCardCard({ card, formatter }: { card: BankRecord; formatter: Intl.NumberFormat | null }) {
+    const [open, setOpen] = React.useState(false);
+    const used = Math.max(0, card.limit - card.balance);
+    const usedPercent = card.limit > 0 ? Math.min(100, (used / card.limit) * 100) : 0;
+
+    return (
+        <>
+            <CardDetailsDialog card={card} open={open} setOpen={setOpen} />
+            <div
+                className="flex border-separate flex-col justify-between rounded-md border shadow-md shadow-black/[0.1] dark:shadow-white/[0.1] cursor-pointer hover:bg-muted/40 transition-colors"
+                onClick={() => setOpen(true)}
+            >
+                <div className="flex flex-col items-center gap-2 p-4">
+                    <img
+                        src={getBankLogo(card.bankName)}
+                        alt={card.bankName}
+                        className="h-12 w-12 object-contain rounded-md"
+                    />
+                    <span className="font-medium text-sm text-center">{card.bankName}</span>
+                    <span className="text-xs text-muted-foreground text-center">{card.accountName}</span>
+                    <span className="text-sm font-semibold">
+                        {formatter ? formatter.format(card.balance) : card.balance.toLocaleString()}
+                    </span>
+                    <div className="w-full space-y-1">
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>Used {Math.round(usedPercent)}%</span>
+                            <span>Limit: {formatter ? formatter.format(card.limit) : card.limit.toLocaleString()}</span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                            <div
+                                className="h-full rounded-full bg-violet-500"
+                                style={{ width: `${usedPercent}%` }}
+                            />
+                        </div>
+                    </div>
                 </div>
             </div>
         </>

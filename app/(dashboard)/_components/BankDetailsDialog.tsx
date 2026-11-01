@@ -4,12 +4,13 @@ import React, { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { UpdateBank } from "../_actions/banks";
+import { UpdateBank, DeleteBank } from "../_actions/banks";
 import { toast } from "sonner";
 import { UpdateBankSchema, UpdateBankSchemaType } from "@/schema/banks";
 import { getBankLogo } from "@/lib/banks";
@@ -59,6 +60,18 @@ export default function BankDetailsDialog({ bank, open, setOpen }: Props) {
         },
         onError: () => {
             toast.error("Something went wrong", { id: "update-bank" });
+        },
+    });
+
+    const { mutate: deleteBank, isPending: isDeleting } = useMutation({
+        mutationFn: DeleteBank,
+        onSuccess: async () => {
+            toast.success("Bank removed", { id: "delete-bank" });
+            await queryClient.invalidateQueries({ queryKey: ["banks"] });
+            setOpen(false);
+        },
+        onError: () => {
+            toast.error("Something went wrong", { id: "delete-bank" });
         },
     });
 
@@ -133,18 +146,45 @@ export default function BankDetailsDialog({ bank, open, setOpen }: Props) {
                     </form>
                 </Form>
 
-                <DialogFooter>
-                    <DialogClose asChild>
-                        <Button variant={"secondary"} type="button" onClick={() => form.reset()}>
-                            Cancel
-                        </Button>
-                    </DialogClose>
-                    {form.formState.isDirty && (
-                        <Button onClick={form.handleSubmit(onSubmit)} disabled={isPending} className="md:mb-0 mb-3">
-                            {!isPending && "Save"}
-                            {isPending && <Loader2 className="animate-spin" />}
-                        </Button>
-                    )}
+                <DialogFooter className="flex-row items-center justify-between gap-2">
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm" disabled={isDeleting} className="gap-1.5">
+                                <Trash2 className="h-3.5 w-3.5" />
+                                Remove
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Remove {bank.bankName}?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This will remove the bank account. Existing transactions linked to it will remain but the account will no longer appear in pickers or the balance chart.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    onClick={() => deleteBank(bank.id)}
+                                >
+                                    Remove
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+
+                    <div className="flex gap-2">
+                        <DialogClose asChild>
+                            <Button variant="secondary" type="button" onClick={() => form.reset()}>
+                                Cancel
+                            </Button>
+                        </DialogClose>
+                        {form.formState.isDirty && (
+                            <Button onClick={form.handleSubmit(onSubmit)} disabled={isPending}>
+                                {!isPending ? "Save" : <Loader2 className="animate-spin" />}
+                            </Button>
+                        )}
+                    </div>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
