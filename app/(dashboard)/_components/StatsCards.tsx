@@ -30,8 +30,9 @@ export default function StatsCards({ from, to, userSettings }: Props) {
     });
 
     const trendQuery = useQuery<GetTrendResponseType>({
-        queryKey: ["overview", "trend", from],
-        queryFn: () => fetch(`/api/stats/trend?from=${from.toISOString()}`).then((res) => res.json()),
+        queryKey: ["overview", "trend", from.getFullYear(), from.getMonth()],
+        queryFn: () =>
+            fetch(`/api/stats/trend?year=${from.getFullYear()}&month=${from.getMonth()}`).then((res) => res.json()),
         staleTime: 5 * 60 * 1000,
     });
 
@@ -210,8 +211,8 @@ function StatCard({
                 </div>
             </div>
 
-            {trend.length > 0 && (
-                <div className="h-14 -mx-4 -mb-4 mt-2">
+            <div className="h-14 -mx-4 -mb-4 mt-2">
+                {trend.length > 0 && (
                     <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={trend} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
                             <defs>
@@ -246,8 +247,8 @@ function StatCard({
                             />
                         </AreaChart>
                     </ResponsiveContainer>
-                </div>
-            )}
+                )}
+            </div>
         </Card>
     );
 }
