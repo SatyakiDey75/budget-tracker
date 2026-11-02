@@ -10,7 +10,7 @@ import { UserSettings } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import { endOfDay } from "date-fns";
 import { ArrowDown, ArrowUp, Landmark, TrendingDown, TrendingUp, Wallet } from "lucide-react";
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import CountUp from "react-countup";
 import { Area, AreaChart, ResponsiveContainer, Tooltip } from "recharts";
 
@@ -19,6 +19,8 @@ interface Props {
     to: Date;
     userSettings: UserSettings;
 }
+
+type Period = "1m" | "3m" | "6m";
 
 export default function StatsCards({ from, to, userSettings }: Props) {
     const statsQuery = useQuery<GetBalancedStatsResponseType>({
@@ -143,6 +145,7 @@ function StatCard({
     invertBadge?: boolean;
 }) {
     const formatFn = useCallback((v: number) => formatter.format(v), [formatter]);
+    const [period, setPeriod] = useState<Period>("1m");
 
     const gradientId = `sparkline-${dataKey}`;
 
@@ -156,8 +159,12 @@ function StatCard({
     const isGood = invertBadge ? !isUp : isUp;
 
     const badgeLabel = usePercent
-        ? `${isUp ? " +" : " "}${pct}%`
-        : `${isUp ? " +" : " -"}${compactFormatter.format(Math.abs(diff))}`;
+        ? `${isUp ? "+" : ""}${pct}%`
+        : `${isUp ? "+" : "-"}${compactFormatter.format(Math.abs(diff))}`;
+
+    const value3m = trend.slice(-3).reduce((sum, slot) => sum + Number(slot[dataKey]), 0);
+    const value6m = trend.reduce((sum, slot) => sum + Number(slot[dataKey]), 0);
+    const displayValue = period === "1m" ? value : period === "3m" ? value3m : value6m;
 
     return (
         <Card className="flex flex-col w-full p-4 gap-3 overflow-hidden">
@@ -166,31 +173,45 @@ function StatCard({
                     {icon}
                     <p className="text-muted-foreground text-sm font-medium">{title}</p>
                 </div>
-                {showBadge && (
+                {showBadge && period === "1m" && (
                     <span className={cn(
-                        "inline-flex items-center gap-0.5 text-[15px] rounded-full px-2 py-0.5 shrink-0",
+                        "inline-flex items-center gap-0.5 text-xs rounded-full px-2 py-0.5 shrink-0",
                         isGood ? "text-emerald-500 bg-emerald-400/10" : "text-rose-500 bg-rose-400/10"
                     )}>
-                        {isUp
-                            ? <ArrowUp className="h-3 w-3" />
-                            : <ArrowDown className="h-3 w-3" />
-                        }
+                        {isUp ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
                         {badgeLabel}
                     </span>
                 )}
             </div>
 
-            <CountUp
-                preserveValue
-                redraw={false}
-                end={value}
-                decimals={2}
-                formattingFn={formatFn}
-                className="text-2xl font-bold"
-            />
+            <div className="flex items-center justify-between gap-2">
+                <CountUp
+                    preserveValue
+                    redraw={false}
+                    end={displayValue}
+                    decimals={2}
+                    formattingFn={formatFn}
+                    className="text-2xl font-bold"
+                />
+                <div className="flex shrink-0 rounded-full border border-border overflow-hidden">
+                    {(["1m", "3m", "6m"] as Period[]).map((p) => (
+                        <button
+                            key={p}
+                            onClick={() => setPeriod(p)}
+                            className={cn(
+                                "px-2.5 py-0.5 text-xs font-medium transition-colors",
+                                period === p ? "font-semibold" : "text-muted-foreground hover:text-foreground"
+                            )}
+                            style={period === p ? { backgroundColor: `${color}25`, color } : undefined}
+                        >
+                            {p.toUpperCase()}
+                        </button>
+                    ))}
+                </div>
+            </div>
 
             {trend.length > 0 && (
-                <div className="h-14 -mx-4 -mb-4">
+                <div className="h-14 -mx-4 -mb-4 mt-2">
                     <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={trend} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
                             <defs>
