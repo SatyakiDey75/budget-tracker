@@ -30,25 +30,23 @@ export async function GET(request: Request) {
 export type GetCategoryStatsResponseType = Awaited<ReturnType<typeof getCategoryStats>>;
 
 async function getCategoryStats(userId: string, from: Date, to: Date) {
-    const stats = await prisma.transaction.groupBy({
-        by: ["type", "category", "categoryIcon"],
+    const transactions = await prisma.transaction.findMany({
         where: {
             userId,
-            category: { not: "CC Bill Payment" },
-            date: {
-                gte: from,
-                lte: to,
-            },
+            date: { gte: from, lte: to },
         },
-        _sum: {
-            amount: true,
-        },
-        orderBy: {
-            _sum: {
-                amount: "desc",
-            },
-        },
+        select: { type: true, category: true, categoryIcon: true, amount: true },
     });
 
-    return stats;
+    const buckets = new Map<string, { type: string; category: string; categoryIcon: string; _sum: { amount: number } }>();
+    for (const t of transactions) {
+        if (t.category === "CC Bill Payment") continue;
+        const key = `${t.type}||${t.category}||${t.categoryIcon}`;
+        if (!buckets.has(key)) {
+            buckets.set(key, { type: t.type, category: t.category, categoryIcon: t.categoryIcon, _sum: { amount: 0 } });
+        }
+        buckets.get(key)!._sum.amount += t.amount;
+    }
+
+    return Array.from(buckets.values()).sort((a, b) => b._sum.amount - a._sum.amount);
 }

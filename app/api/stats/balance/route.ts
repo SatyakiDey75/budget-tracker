@@ -31,24 +31,25 @@ export async function GET(request: Request) {
 export type GetBalancedStatsResponseType = Awaited<ReturnType<typeof getBalancedStats>>;
 
 async function getBalancedStats(userId: string, from: Date, to: Date) {
-    const totals = await prisma.transaction.groupBy({
-        by: ["type"],
+    const transactions = await prisma.transaction.findMany({
         where: {
             userId,
-            category: { not: "CC Bill Payment" },
-            date: {
-                gte: from,
-                lte: to,
-            },
+            date: { gte: from, lte: to },
         },
-        _sum: {
-            amount: true,
-        },
+        select: { type: true, amount: true, category: true },
     });
 
-    return {
-        expense: totals.find(t => t.type === "expense")?._sum.amount || 0,
-        income: totals.find(t => t.type === "income")?._sum.amount || 0,
-        investment: totals.find(t => t.type === "investment")?._sum.amount || 0,
+    let income = 0, expense = 0, investment = 0;
+    for (const t of transactions) {
+        if (t.category === "CC Bill Payment") continue;
+        if (t.type === "income")     income     += t.amount;
+        if (t.type === "expense")    expense    += t.amount;
+        if (t.type === "investment") investment += t.amount;
     }
+
+    return {
+        income:     Math.round(income     * 100) / 100,
+        expense:    Math.round(expense    * 100) / 100,
+        investment: Math.round(investment * 100) / 100,
+    };
 }

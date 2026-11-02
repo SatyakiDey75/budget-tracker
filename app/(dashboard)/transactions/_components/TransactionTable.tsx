@@ -22,6 +22,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
+import { endOfDay } from "date-fns";
 import React, { useMemo, useState } from "react";
 import SkeletonWrapper from "@/components/SkeletonWrapper";
 import { DataTableColumnHeader } from "@/components/datatable/ColumnHeader";
@@ -44,7 +45,6 @@ import EditTransactionDialog from "../../_components/EditTransactionDialog";
 import { DeleteTransaction } from "../_actions/deleteTransaction";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { toDate } from "date-fns";
 
 interface Props {
     from: Date;
@@ -206,7 +206,12 @@ export default function TransactionTable({ from, to }: Props) {
 
     const history = useQuery<GetTransactionHistoryResponseType>({
         queryKey: ["transactions", "history", from, to],
-        queryFn: () => fetch(`/api/transactions-history?from=${toDate(from)}&to=${toDate(to)}`).then((res) => res.json()),
+        queryFn: () =>
+            fetch(`/api/transactions-history?from=${from.toISOString()}&to=${endOfDay(to).toISOString()}`)
+                .then((res) => {
+                    if (!res.ok) throw new Error("Failed to fetch transactions");
+                    return res.json();
+                }),
     });
 
     const handleExportCSV = (data: any[]) => {

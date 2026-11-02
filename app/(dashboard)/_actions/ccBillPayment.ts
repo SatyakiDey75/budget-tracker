@@ -50,6 +50,7 @@ export async function CreateCCBillPayment(form: CreateCCBillPaymentSchemaType) {
                 bankId: bank.id,
                 bankName: bank.bankName,
                 accountName: bank.accountName,
+                merchantName: cc.id, // stored so delete can reverse the CC balance
             },
         });
         // No MonthHistory/YearHistory update — transfers are not expenses

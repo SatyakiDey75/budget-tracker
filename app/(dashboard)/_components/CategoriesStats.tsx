@@ -8,7 +8,7 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { GetFormatterForCurrency } from "@/lib/helpers";
 import { UserSettings } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
-import { format, toDate } from "date-fns";
+import { endOfDay, format } from "date-fns";
 import React, { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 // import { Cell, Pie, PieChart, Sector, Tooltip } from "recharts";
@@ -42,7 +42,7 @@ export default function CategoriesStats({ from, to, userSettings }: Props) {
     const statsQuery = useQuery<GetCategoryStatsResponseType>({
         queryKey: ["overview", "stats", "categories", from, to],
         queryFn: () =>
-            fetch(`/api/stats/categories?from=${toDate(from)}&to=${toDate(to)}`).then((r) =>
+            fetch(`/api/stats/categories?from=${from.toISOString()}&to=${endOfDay(to).toISOString()}`).then((r) =>
                 r.json()
             ),
     });
@@ -50,7 +50,7 @@ export default function CategoriesStats({ from, to, userSettings }: Props) {
     const merchantsQuery = useQuery<GetMerchantStatsResponseType>({
         queryKey: ["overview", "stats", "merchants", from, to],
         queryFn: () =>
-            fetch(`/api/stats/merchants?from=${toDate(from)}&to=${toDate(to)}`).then((r) =>
+            fetch(`/api/stats/merchants?from=${from.toISOString()}&to=${endOfDay(to).toISOString()}`).then((r) =>
                 r.json()
             ),
     });
