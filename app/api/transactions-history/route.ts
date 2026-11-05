@@ -50,8 +50,14 @@ async function getTransactionHistory(userId: string, from: Date, to: Date) {
         }],
     });
 
-    return transactions.map((transaction) => ({
-        ...transaction,
-        formattedAmount: formatter.format(transaction.amount),
-    }));
+    return transactions.map((transaction) => {
+        const d = transaction.date;
+        return {
+            ...transaction,
+            // Normalize to UTC midnight so the client always gets the correct
+            // calendar date regardless of what time was stored in the DB.
+            date: new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())),
+            formattedAmount: formatter.format(transaction.amount),
+        };
+    });
 }

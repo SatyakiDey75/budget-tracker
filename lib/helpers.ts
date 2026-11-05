@@ -1,17 +1,29 @@
-import { formatInTimeZone } from "date-fns-tz";
+import { format } from "date-fns";
 import { Currencies } from "./currencies";
 
-const IST = "Asia/Kolkata";
-
-// Store only the local calendar date as UTC midnight — strip the time component
-// so a transaction entered at 8 PM IST still shows as that day, not the next.
 export function DateToUTCDate(date: Date): Date {
-    return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    return new Date(
+        Date.UTC(
+            date.getFullYear(),
+            date.getMonth(),
+            date.getDate(),
+            date.getHours(),
+            date.getMinutes(),
+            date.getSeconds(),
+            date.getMilliseconds()
+        )
+    );
 }
 
-// Format any UTC/local date for display in IST — no dependency on server/browser TZ.
+// Format a stored transaction date for display.
+// Both old records (IST hours baked into UTC) and new records (midnight UTC)
+// share the same invariant: getUTC* components = the intended IST calendar date.
+// Reading UTC components and re-wrapping as a local date lets date-fns format
+// the correct calendar date without any timezone dependency.
 export function formatIST(date: Date | string | number, fmt: string): string {
-    return formatInTimeZone(new Date(date), IST, fmt);
+    const d = new Date(date);
+    const utcAsLocal = new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+    return format(utcAsLocal, fmt);
 }
 
 export function GetFormatterForCurrency(currency: string) {

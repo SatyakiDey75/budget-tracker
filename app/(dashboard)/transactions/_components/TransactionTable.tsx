@@ -23,7 +23,7 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { endOfDay } from "date-fns";
-import { formatIST } from "@/lib/helpers";
+import { DateToUTCDate, formatIST } from "@/lib/helpers";
 import React, { useMemo, useState } from "react";
 import SkeletonWrapper from "@/components/SkeletonWrapper";
 import { DataTableColumnHeader } from "@/components/datatable/ColumnHeader";
@@ -199,7 +199,7 @@ export default function TransactionTable({ from, to }: Props) {
     const history = useQuery<GetTransactionHistoryResponseType>({
         queryKey: ["transactions", "history", from, to],
         queryFn: () =>
-            fetch(`/api/transactions-history?from=${from.toISOString()}&to=${endOfDay(to).toISOString()}`)
+            fetch(`/api/transactions-history?from=${DateToUTCDate(from).toISOString()}&to=${DateToUTCDate(endOfDay(to)).toISOString()}`)
                 .then((res) => {
                     if (!res.ok) throw new Error("Failed to fetch transactions");
                     return res.json();

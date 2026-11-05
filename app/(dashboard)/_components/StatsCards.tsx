@@ -4,7 +4,7 @@ import { GetBalancedStatsResponseType } from "@/app/api/stats/balance/route";
 import { GetTrendResponseType } from "@/app/api/stats/trend/route";
 import SkeletonWrapper from "@/components/SkeletonWrapper";
 import { Card } from "@/components/ui/card";
-import { GetFormatterForCurrency } from "@/lib/helpers";
+import { DateToUTCDate, GetFormatterForCurrency } from "@/lib/helpers";
 import { cn } from "@/lib/utils";
 import { UserSettings } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
@@ -26,7 +26,7 @@ export default function StatsCards({ from, to, userSettings }: Props) {
     const statsQuery = useQuery<GetBalancedStatsResponseType>({
         queryKey: ["overview", "stats", from, to],
         queryFn: () =>
-            fetch(`/api/stats/balance?from=${from.toISOString()}&to=${endOfDay(to).toISOString()}`).then((res) => res.json()),
+            fetch(`/api/stats/balance?from=${DateToUTCDate(from).toISOString()}&to=${DateToUTCDate(endOfDay(to)).toISOString()}`).then((res) => res.json()),
     });
 
     const trendQuery = useQuery<GetTrendResponseType>({

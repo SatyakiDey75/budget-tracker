@@ -5,7 +5,7 @@ import { GetMerchantStatsResponseType } from "@/app/api/stats/merchants/route";
 import SkeletonWrapper from "@/components/SkeletonWrapper";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { GetFormatterForCurrency, formatIST } from "@/lib/helpers";
+import { DateToUTCDate, GetFormatterForCurrency, formatIST } from "@/lib/helpers";
 import { UserSettings } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import { endOfDay } from "date-fns";
@@ -42,7 +42,7 @@ export default function CategoriesStats({ from, to, userSettings }: Props) {
     const statsQuery = useQuery<GetCategoryStatsResponseType>({
         queryKey: ["overview", "stats", "categories", from, to],
         queryFn: () =>
-            fetch(`/api/stats/categories?from=${from.toISOString()}&to=${endOfDay(to).toISOString()}`).then((r) =>
+            fetch(`/api/stats/categories?from=${DateToUTCDate(from).toISOString()}&to=${DateToUTCDate(endOfDay(to)).toISOString()}`).then((r) =>
                 r.json()
             ),
     });
@@ -50,7 +50,7 @@ export default function CategoriesStats({ from, to, userSettings }: Props) {
     const merchantsQuery = useQuery<GetMerchantStatsResponseType>({
         queryKey: ["overview", "stats", "merchants", from, to],
         queryFn: () =>
-            fetch(`/api/stats/merchants?from=${from.toISOString()}&to=${endOfDay(to).toISOString()}`).then((r) =>
+            fetch(`/api/stats/merchants?from=${DateToUTCDate(from).toISOString()}&to=${DateToUTCDate(endOfDay(to)).toISOString()}`).then((r) =>
                 r.json()
             ),
     });
