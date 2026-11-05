@@ -31,7 +31,8 @@ import { CalendarIcon, Loader2 } from "lucide-react";
 import { PopoverContent } from "@/components/ui/popover";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { DateToUTCDate, formatIST } from "@/lib/helpers";
+import { format } from "date-fns";
+import { DateToUTCDate } from "@/lib/helpers";
 import { useRouter } from "next/navigation";
 import { UpdateTransaction } from "../transactions/_actions/updateTransaction";
 import { GetTransactionHistoryResponseType } from "@/app/api/transactions-history/route";
@@ -190,7 +191,7 @@ export default function EditTransactionDialog({ open, setOpen, transaction }: Pr
                                                                 !field.value && "text-muted-foreground"
                                                             )}
                                                         >
-                                                            {field.value ? formatIST(field.value, "PPP") : <span>Pick a date</span>}
+                                                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
                                                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                                         </Button>
                                                     </FormControl>
@@ -263,7 +264,7 @@ export default function EditTransactionDialog({ open, setOpen, transaction }: Pr
                                                                 !field.value && "text-muted-foreground"
                                                             )}
                                                         >
-                                                            {field.value ? formatIST(field.value, "PPP") : <span>Pick a date</span>}
+                                                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
                                                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                                         </Button>
                                                     </FormControl>

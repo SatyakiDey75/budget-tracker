@@ -20,7 +20,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CreateTransaction } from "../_actions/transaction";
 import { CreateCCBillPayment } from "../_actions/ccBillPayment";
 import { toast } from "sonner";
-import { DateToUTCDate, formatIST } from "@/lib/helpers";
+import { format } from "date-fns";
+import { DateToUTCDate } from "@/lib/helpers";
 import { getBankLogo } from "@/lib/banks";
 import { useRouter } from "next/navigation";
 
@@ -245,7 +246,7 @@ export default function CreateTransactionDialog({ trigger, type }: Props) {
                                             <PopoverTrigger asChild>
                                                 <FormControl>
                                                     <Button variant={"outline"} className="w-full pl-3 text-left font-normal">
-                                                        {formatIST(ccDate, "PPP")}
+                                                        {format(ccDate, "PPP")}
                                                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                                     </Button>
                                                 </FormControl>
@@ -327,7 +328,7 @@ export default function CreateTransactionDialog({ trigger, type }: Props) {
                                                 <PopoverTrigger asChild>
                                                     <FormControl>
                                                         <Button variant={"outline"} className={cn("w-[200px] pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
-                                                            {field.value ? formatIST(field.value, "PPP") : <span>Pick a date</span>}
+                                                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
                                                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                                         </Button>
                                                     </FormControl>

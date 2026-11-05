@@ -31,7 +31,8 @@ import { CalendarIcon, Loader2 } from "lucide-react";
 import { PopoverContent } from "@/components/ui/popover";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { DateToUTCDate, formatIST } from "@/lib/helpers";
+import { format } from "date-fns";
+import { DateToUTCDate } from "@/lib/helpers";
 import { useRouter } from "next/navigation";
 import { CreateInvestment } from "../_actions/investment";
 
@@ -152,7 +153,7 @@ export default function CreateInvestmentDialog({ trigger }: Props) {
                                                         )}
                                                     >
                                                         {field.value ? (
-                                                            formatIST(field.value, "PPP")
+                                                            format(field.value, "PPP")
                                                         ) : (
                                                             <span>Pick a date</span>
                                                         )}
