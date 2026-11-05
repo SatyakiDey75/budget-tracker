@@ -27,12 +27,11 @@ import { Input } from "@/components/ui/input";
 import BankPicker from "./BankPicker";
 import { Popover, PopoverTrigger } from "@radix-ui/react-popover";
 import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
 import { CalendarIcon, Loader2 } from "lucide-react";
 import { PopoverContent } from "@/components/ui/popover";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { DateToUTCDate } from "@/lib/helpers";
+import { DateToUTCDate, formatIST } from "@/lib/helpers";
 import { useRouter } from "next/navigation";
 import { CreateInvestment } from "../_actions/investment";
 
@@ -153,7 +152,7 @@ export default function CreateInvestmentDialog({ trigger }: Props) {
                                                         )}
                                                     >
                                                         {field.value ? (
-                                                            format(field.value, "PPP")
+                                                            formatIST(field.value, "PPP")
                                                         ) : (
                                                             <span>Pick a date</span>
                                                         )}

@@ -23,6 +23,7 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { endOfDay } from "date-fns";
+import { formatIST } from "@/lib/helpers";
 import React, { useMemo, useState } from "react";
 import SkeletonWrapper from "@/components/SkeletonWrapper";
 import { DataTableColumnHeader } from "@/components/datatable/ColumnHeader";
@@ -137,16 +138,7 @@ const columns: ColumnDef<TransactionHistoryRow>[] = [
         accessorKey: "date",
         header: "Date",
         cell: ({ row }) => {
-            const date = new Date(row.original.date);
-            const formattedDate = date.toLocaleDateString("en-GB", {
-                timeZone: "IST",
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-            });
-            return (
-                <div className="">{formattedDate}</div>
-            )
+            return <div>{formatIST(row.original.date, "dd/MM/yyyy")}</div>;
         },
     },
     {

@@ -5,10 +5,10 @@ import { GetMerchantStatsResponseType } from "@/app/api/stats/merchants/route";
 import SkeletonWrapper from "@/components/SkeletonWrapper";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { GetFormatterForCurrency } from "@/lib/helpers";
+import { GetFormatterForCurrency, formatIST } from "@/lib/helpers";
 import { UserSettings } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
-import { endOfDay, format } from "date-fns";
+import { endOfDay } from "date-fns";
 import React, { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 // import { Cell, Pie, PieChart, Sector, Tooltip } from "recharts";
@@ -120,7 +120,7 @@ function WhereMoneyWent({
             <CardHeader className="pb-2">
                 <CardTitle className="text-2xl font-semibold">Where the money went</CardTitle>
                 <p className="text-xs text-muted-foreground">
-                    {format(from, "MMM d")} – {format(to, "MMM d")}
+                    {formatIST(from, "MMM d")} – {formatIST(to, "MMM d")}
                 </p>
             </CardHeader>
             <div className="p-6 pt-2">
