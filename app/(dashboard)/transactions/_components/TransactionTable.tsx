@@ -531,6 +531,8 @@ function RowActions({ transaction }: { transaction: TransactionHistoryRow }) {
     const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
     const [showEditDialog, setShowEditDialog] = React.useState(false);
 
+    const isCCBillPayment = transaction.category === "CC Bill Payment";
+
     return (
         <>
             <DeleteTransactionDialog
@@ -538,11 +540,13 @@ function RowActions({ transaction }: { transaction: TransactionHistoryRow }) {
                 setOpen={setShowDeleteDialog}
                 transactionId={transaction.id}
             />
-            <EditTransactionDialog
-                open={showEditDialog}
-                setOpen={setShowEditDialog}
-                transaction={transaction}
-            />
+            {!isCCBillPayment && (
+                <EditTransactionDialog
+                    open={showEditDialog}
+                    setOpen={setShowEditDialog}
+                    transaction={transaction}
+                />
+            )}
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button variant={"ghost"} className="h-8 w-8 p-0">
@@ -553,13 +557,15 @@ function RowActions({ transaction }: { transaction: TransactionHistoryRow }) {
                 <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                        className="flex items-center gap-2"
-                        onSelect={() => setShowEditDialog(true)}
-                    >
-                        <PencilIcon className="h-4 w-4 text-muted-foreground" />
-                        Edit
-                    </DropdownMenuItem>
+                    {!isCCBillPayment && (
+                        <DropdownMenuItem
+                            className="flex items-center gap-2"
+                            onSelect={() => setShowEditDialog(true)}
+                        >
+                            <PencilIcon className="h-4 w-4 text-muted-foreground" />
+                            Edit
+                        </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem
                         className="flex items-center gap-2"
                         onSelect={() => setShowDeleteDialog((prev) => !prev)}

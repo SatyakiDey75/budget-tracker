@@ -36,141 +36,139 @@ export async function UpdateTransaction(form: UpdateTransactionSchemaType) {
         ? await prisma.bank.findFirst({ where: { id: oldTransaction.bankId, userId: user.id } })
         : null;
 
-    await prisma.$transaction(async (tx) => {
-        // 1. Update the transaction record
-        await (tx.transaction as any).update({
-            where: { id: transactionId, userId: user.id },
-            data: {
-                amount,
-                date,
-                description: description || "",
-                type,
-                category: type === "investment" ? ("Investment") : categoryRow!.name,
-                categoryIcon: type === "investment" ? "📈" : categoryRow!.icon,
-                bankId: newBankRow?.id ?? null,
-                bankName: newIsCash ? "Cash" : (newBankRow?.bankName ?? null),
-                accountName: newIsCash ? null : (newBankRow?.accountName ?? null),
-                merchantName: type === "investment" ? (investmentApp || null) : type === "expense" ? (merchantName || null) : null,
-                investmentApp: type === "investment" ? (investmentApp || null) : null,
-            },
-        });
+    // 1. Update the transaction record
+    await (prisma.transaction as any).update({
+        where: { id: transactionId, userId: user.id },
+        data: {
+            amount,
+            date,
+            description: description || "",
+            type,
+            category: type === "investment" ? "Investment" : categoryRow!.name,
+            categoryIcon: type === "investment" ? "📈" : categoryRow!.icon,
+            bankId: newBankRow?.id ?? null,
+            bankName: newIsCash ? "Cash" : (newBankRow?.bankName ?? null),
+            accountName: newIsCash ? null : (newBankRow?.accountName ?? null),
+            merchantName: type === "investment" ? (investmentApp || null) : type === "expense" ? (merchantName || null) : null,
+            investmentApp: type === "investment" ? (investmentApp || null) : null,
+        },
+    });
 
-        // 2. Reverse old month/year history
-        await tx.monthHistory.updateMany({
-            where: {
-                userId: user.id,
-                day: oldTransaction.date.getUTCDate(),
-                month: oldTransaction.date.getUTCMonth(),
-                year: oldTransaction.date.getUTCFullYear(),
-            },
-            data: {
-                expense: { decrement: oldTransaction.type === "expense" ? oldTransaction.amount : 0 },
-                income: { decrement: oldTransaction.type === "income" ? oldTransaction.amount : 0 },
-                investment: { decrement: oldTransaction.type === "investment" ? oldTransaction.amount : 0 },
-            },
-        });
+    // 2. Reverse old month/year history
+    await prisma.monthHistory.updateMany({
+        where: {
+            userId: user.id,
+            day: oldTransaction.date.getUTCDate(),
+            month: oldTransaction.date.getUTCMonth(),
+            year: oldTransaction.date.getUTCFullYear(),
+        },
+        data: {
+            expense: { decrement: oldTransaction.type === "expense" ? oldTransaction.amount : 0 },
+            income: { decrement: oldTransaction.type === "income" ? oldTransaction.amount : 0 },
+            investment: { decrement: oldTransaction.type === "investment" ? oldTransaction.amount : 0 },
+        },
+    });
 
-        await tx.yearHistory.updateMany({
-            where: {
-                userId: user.id,
-                month: oldTransaction.date.getUTCMonth(),
-                year: oldTransaction.date.getUTCFullYear(),
-            },
-            data: {
-                expense: { decrement: oldTransaction.type === "expense" ? oldTransaction.amount : 0 },
-                income: { decrement: oldTransaction.type === "income" ? oldTransaction.amount : 0 },
-                investment: { decrement: oldTransaction.type === "investment" ? oldTransaction.amount : 0 },
-            },
-        });
+    await prisma.yearHistory.updateMany({
+        where: {
+            userId: user.id,
+            month: oldTransaction.date.getUTCMonth(),
+            year: oldTransaction.date.getUTCFullYear(),
+        },
+        data: {
+            expense: { decrement: oldTransaction.type === "expense" ? oldTransaction.amount : 0 },
+            income: { decrement: oldTransaction.type === "income" ? oldTransaction.amount : 0 },
+            investment: { decrement: oldTransaction.type === "investment" ? oldTransaction.amount : 0 },
+        },
+    });
 
-        // 3. Apply new month/year history
-        await tx.monthHistory.upsert({
-            where: {
-                day_month_year_userId: {
-                    userId: user.id,
-                    day: date.getUTCDate(),
-                    month: date.getUTCMonth(),
-                    year: date.getUTCFullYear(),
-                },
-            },
-            create: {
+    // 3. Apply new month/year history
+    await prisma.monthHistory.upsert({
+        where: {
+            day_month_year_userId: {
                 userId: user.id,
                 day: date.getUTCDate(),
                 month: date.getUTCMonth(),
                 year: date.getUTCFullYear(),
-                expense: type === "expense" ? amount : 0,
-                income: type === "income" ? amount : 0,
-                investment: type === "investment" ? amount : 0,
             },
-            update: {
-                expense: { increment: type === "expense" ? amount : 0 },
-                income: { increment: type === "income" ? amount : 0 },
-                investment: { increment: type === "investment" ? amount : 0 },
-            },
-        });
+        },
+        create: {
+            userId: user.id,
+            day: date.getUTCDate(),
+            month: date.getUTCMonth(),
+            year: date.getUTCFullYear(),
+            expense: type === "expense" ? amount : 0,
+            income: type === "income" ? amount : 0,
+            investment: type === "investment" ? amount : 0,
+        },
+        update: {
+            expense: { increment: type === "expense" ? amount : 0 },
+            income: { increment: type === "income" ? amount : 0 },
+            investment: { increment: type === "investment" ? amount : 0 },
+        },
+    });
 
-        await tx.yearHistory.upsert({
-            where: {
-                month_year_userId: {
-                    userId: user.id,
-                    month: date.getUTCMonth(),
-                    year: date.getUTCFullYear(),
-                },
-            },
-            create: {
+    await prisma.yearHistory.upsert({
+        where: {
+            month_year_userId: {
                 userId: user.id,
                 month: date.getUTCMonth(),
                 year: date.getUTCFullYear(),
-                expense: type === "expense" ? amount : 0,
-                income: type === "income" ? amount : 0,
-                investment: type === "investment" ? amount : 0,
             },
-            update: {
-                expense: { increment: type === "expense" ? amount : 0 },
-                income: { increment: type === "income" ? amount : 0 },
-                investment: { increment: type === "investment" ? amount : 0 },
-            },
-        });
-
-        // 4. Reverse old bank balance (skip if old transaction was cash)
-        const oldIsCash = oldTransaction.bankName === "Cash" && !oldTransaction.bankId;
-        if (!oldIsCash && oldBankRow) {
-            await applyBankBalance(tx, user.id, oldBankRow, {
-                increment: oldTransaction.type === "income" ? -oldTransaction.amount : oldTransaction.amount,
-            });
-            await applyBankDayHistory(tx, user.id, oldBankRow, oldTransaction.date, oldTransaction.type === "income" ? -oldTransaction.amount : oldTransaction.amount);
-        }
-
-        // 5. Apply new bank balance (skip if new source is cash)
-        if (!newIsCash && newBankRow) {
-            await applyBankBalance(tx, user.id, newBankRow, {
-                increment: type === "income" ? amount : -amount,
-            });
-            await applyBankDayHistory(tx, user.id, newBankRow, date, type === "income" ? amount : -amount);
-        }
+        },
+        create: {
+            userId: user.id,
+            month: date.getUTCMonth(),
+            year: date.getUTCFullYear(),
+            expense: type === "expense" ? amount : 0,
+            income: type === "income" ? amount : 0,
+            investment: type === "investment" ? amount : 0,
+        },
+        update: {
+            expense: { increment: type === "expense" ? amount : 0 },
+            income: { increment: type === "income" ? amount : 0 },
+            investment: { increment: type === "investment" ? amount : 0 },
+        },
     });
+
+    // 4. Reverse old bank balance (skip if old transaction was cash)
+    const oldIsCash = oldTransaction.bankName === "Cash" && !oldTransaction.bankId;
+    if (!oldIsCash && oldBankRow) {
+        await applyBankBalance(prisma, user.id, oldBankRow, {
+            increment: oldTransaction.type === "income" ? -oldTransaction.amount : oldTransaction.amount,
+        });
+        await applyBankDayHistory(prisma, user.id, oldBankRow, oldTransaction.date, oldTransaction.type === "income" ? -oldTransaction.amount : oldTransaction.amount);
+    }
+
+    // 5. Apply new bank balance (skip if new source is cash)
+    if (!newIsCash && newBankRow) {
+        await applyBankBalance(prisma, user.id, newBankRow, {
+            increment: type === "income" ? amount : -amount,
+        });
+        await applyBankDayHistory(prisma, user.id, newBankRow, date, type === "income" ? amount : -amount);
+    }
 }
 
 async function applyBankBalance(
-    tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+    db: typeof prisma,
     userId: string,
     bankRow: { id: string },
     data: { increment: number }
 ) {
-    await tx.bank.update({
+    await db.bank.update({
         where: { id: bankRow.id, userId },
         data: { balance: data },
     });
 }
 
 async function applyBankDayHistory(
-    tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+    db: typeof prisma,
     userId: string,
     bankRow: { id: string },
     date: Date,
     netChange: number
 ) {
-    await (tx as any).bankDayHistory.upsert({
+    await (db as any).bankDayHistory.upsert({
         where: { userId_bankId_day_month_year: { userId, bankId: bankRow.id, day: date.getUTCDate(), month: date.getUTCMonth(), year: date.getUTCFullYear() } },
         create: { userId, bankId: bankRow.id, day: date.getUTCDate(), month: date.getUTCMonth(), year: date.getUTCFullYear(), netChange },
         update: { netChange: { increment: netChange } },
