@@ -27,6 +27,7 @@ async function getMerchantStats(userId: string, from: Date, to: Date) {
         where: {
             userId,
             type: "expense",
+            category: { not: "CC Bill Payment" },
             merchantName: { not: null },
             date: { gte: from, lte: to },
         },
