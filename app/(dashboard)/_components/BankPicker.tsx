@@ -25,9 +25,10 @@ interface Props {
     className?: string;
     ttype?: TransactionType;
     value?: string;
+    regularOnly?: boolean;
 }
 
-export default function BankPicker({ onChange, className, ttype, value: initialValue }: Props) {
+export default function BankPicker({ onChange, className, ttype, value: initialValue, regularOnly }: Props) {
     const [open, setOpen] = React.useState(false);
     const [value, setValue] = React.useState<string>(initialValue || "");
 
@@ -55,7 +56,7 @@ export default function BankPicker({ onChange, className, ttype, value: initialV
     );
 
     const regularBanks = banksQuery.data?.filter((b) => !b.isCredit) ?? [];
-    const creditCards = banksQuery.data?.filter((b) => b.isCredit) ?? [];
+    const creditCards = regularOnly ? [] : (banksQuery.data?.filter((b) => b.isCredit) ?? []);
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
@@ -143,7 +144,7 @@ function CardRow({ bank }: { bank: BankRecord }) {
                 alt={bank.bankName}
                 className="h-4 w-4 object-contain rounded shrink-0"
             />
-            <span className="truncate text-sm">{bank.bankName} – {bank.accountName}</span>
+            <span className="truncate text-sm">{bank.accountName}</span>
         </div>
     );
 }

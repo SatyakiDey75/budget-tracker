@@ -31,7 +31,7 @@ export async function CreateInvestment(form: CreateInvestmentSchemaType) {
                 category: "Investment",
                 categoryIcon: "📈",
                 bankId: bankRow?.id ?? null,
-                bankName: isCash ? "Cash" : (bankRow?.bankName ?? null),
+                bankName: isCash ? "Cash" : (bankRow?.isCredit ? null : (bankRow?.bankName ?? null)),
                 accountName: isCash ? null : (bankRow?.accountName ?? null),
                 investmentApp: investmentApp || null,
                 merchantName: investmentApp || null,

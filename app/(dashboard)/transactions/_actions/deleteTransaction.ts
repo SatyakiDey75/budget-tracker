@@ -18,7 +18,7 @@ export async function DeleteTransaction(id: string) {
         throw new Error("Transaction not found");
     }
 
-    const isTransfer = transaction.category === "CC Bill Payment";
+    const isTransfer = transaction.category === "CC Bill Payment" || transaction.type === "transfer";
     const d = transaction.date;
     const day = d.getUTCDate();
     const month = d.getUTCMonth();

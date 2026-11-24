@@ -4,10 +4,11 @@ import { CurrencyComboBox } from "@/components/CurrencyComboBox";
 import SkeletonWrapper from "@/components/SkeletonWrapper";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
-import { CreditCard, Landmark, PlusSquare, TrashIcon, TrendingDown, TrendingUp } from "lucide-react";
+import { ArrowLeftRight, CreditCard, Landmark, PlusSquare, TrashIcon, TrendingDown, TrendingUp } from "lucide-react";
 import React from "react";
 import CreateCategoryDialog from "../_components/CreateCategoryDialog";
 import CreateBankDialog from "../_components/CreateBankDialog";
+import TransferMoneyDialog from "../_components/TransferMoneyDialog";
 import BankDetailsDialog from "../_components/BankDetailsDialog";
 import CreateCardDialog from "../_components/CreateCardDialog";
 import CardDetailsDialog from "../_components/CardDetailsDialog";
@@ -91,14 +92,24 @@ function BankList() {
                                 </div>
                             </div>
                         </div>
-                        <CreateBankDialog
-                            trigger={
-                                <Button className="gap-2 text-sm">
-                                    <PlusSquare className="h-4 w-4" />
-                                    Add Bank
-                                </Button>
-                            }
-                        />
+                        <div className="flex gap-2">
+                            <TransferMoneyDialog
+                                trigger={
+                                    <Button variant="outline" className="gap-2 text-sm">
+                                        <ArrowLeftRight className="h-4 w-4" />
+                                        Transfer Money
+                                    </Button>
+                                }
+                            />
+                            <CreateBankDialog
+                                trigger={
+                                    <Button className="gap-2 text-sm">
+                                        <PlusSquare className="h-4 w-4" />
+                                        Add Bank
+                                    </Button>
+                                }
+                            />
+                        </div>
                     </CardTitle>
                 </CardHeader>
 

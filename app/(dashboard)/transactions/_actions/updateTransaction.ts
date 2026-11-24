@@ -47,7 +47,7 @@ export async function UpdateTransaction(form: UpdateTransactionSchemaType) {
             category: type === "investment" ? "Investment" : categoryRow!.name,
             categoryIcon: type === "investment" ? "📈" : categoryRow!.icon,
             bankId: newBankRow?.id ?? null,
-            bankName: newIsCash ? "Cash" : (newBankRow?.bankName ?? null),
+            bankName: newIsCash ? "Cash" : (newBankRow?.isCredit ? null : (newBankRow?.bankName ?? null)),
             accountName: newIsCash ? null : (newBankRow?.accountName ?? null),
             merchantName: type === "investment" ? (investmentApp || null) : type === "expense" ? (merchantName || null) : null,
             investmentApp: type === "investment" ? (investmentApp || null) : null,

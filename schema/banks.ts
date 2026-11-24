@@ -38,3 +38,11 @@ export const CreateCCBillPaymentSchema = z.object({
     date: z.coerce.date(),
 });
 export type CreateCCBillPaymentSchemaType = z.infer<typeof CreateCCBillPaymentSchema>;
+
+export const CreateTransferSchema = z.object({
+    sourceBankId: z.string().min(1),
+    destBankId: z.string().min(1),
+    amount: z.coerce.number().positive().multipleOf(0.01),
+    date: z.coerce.date(),
+});
+export type CreateTransferSchemaType = z.infer<typeof CreateTransferSchema>;

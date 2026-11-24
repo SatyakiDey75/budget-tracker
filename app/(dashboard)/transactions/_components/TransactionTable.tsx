@@ -96,16 +96,18 @@ const columns: ColumnDef<TransactionHistoryRow>[] = [
         ),
         filterFn: (row, _id, value) => {
             const b = row.original;
-            const display = !b.bankName ? "—"
-                : b.bankName === "Cash" ? "Cash"
-                : `${b.bankName} – ${b.accountName}`;
+            const isCardName = b.accountName && isNaN(Number(b.accountName));
+            const display = b.bankName === "Cash" ? "Cash"
+                : b.bankName ? (isCardName ? b.accountName! : `${b.bankName} – ${b.accountName}`)
+                : b.accountName ?? "—";
             return value.includes(display);
         },
         cell: ({ row }) => {
             const b = row.original;
-            const display = !b.bankName ? "—"
-                : b.bankName === "Cash" ? "Cash"
-                : `${b.bankName} – ${b.accountName}`;
+            const isCardName = b.accountName && isNaN(Number(b.accountName));
+            const display = b.bankName === "Cash" ? "Cash"
+                : b.bankName ? (isCardName ? b.accountName! : `${b.bankName} – ${b.accountName}`)
+                : b.accountName ?? "—";
             return <div className="text-muted-foreground">{display}</div>;
         },
     },
@@ -117,11 +119,14 @@ const columns: ColumnDef<TransactionHistoryRow>[] = [
         filterFn: (row, id, value) => {
             return value.includes(row.getValue(id));
         },
-        cell: ({ row }) => (
-            <div className="capitalize">
-                {(row.original as any).merchantName || "—"}
-            </div>
-        ),
+        cell: ({ row }) => {
+            const isHidden = row.original.category === "CC Bill Payment" || row.original.type === "transfer";
+            return (
+                <div className="capitalize">
+                    {isHidden ? "—" : ((row.original as any).merchantName || "—")}
+                </div>
+            );
+        },
     },
     {
         accessorKey: "description",
@@ -155,6 +160,8 @@ const columns: ColumnDef<TransactionHistoryRow>[] = [
                     ? "bg-emerald-400/10 text-emerald-500"
                     : row.original.type === "investment"
                     ? "bg-blue-400/10 text-blue-500"
+                    : row.original.type === "transfer"
+                    ? "bg-gray-400/20 text-foreground"
                     : "bg-rose-400/10 text-rose-500")}>
                 {row.original.type}
             </div>
@@ -285,6 +292,7 @@ export default function TransactionTable({ from, to }: Props) {
         history.data?.forEach((transaction) => {
             const name = (transaction as any).merchantName;
             if (!name) return;
+            if (transaction.category === "CC Bill Payment" || transaction.type === "transfer") return;
             if (!seen.has(name)) {
                 seen.set(name, { value: name, label: name });
             }
@@ -353,7 +361,7 @@ export default function TransactionTable({ from, to }: Props) {
                             bank: !row.original.bankName ? ""
                                 : row.original.bankName === "Cash" ? "Cash"
                                 : `${row.original.bankName} – ${row.original.accountName}`,
-                            merchant: (row.original as any).merchantName || "",
+                            merchant: (row.original.category === "CC Bill Payment" || row.original.type === "transfer") ? "" : ((row.original as any).merchantName || ""),
                             type: row.original.type,
                             amount: row.original.amount,
                             formattedAmount: row.original.formattedAmount,
@@ -531,7 +539,7 @@ function RowActions({ transaction }: { transaction: TransactionHistoryRow }) {
     const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
     const [showEditDialog, setShowEditDialog] = React.useState(false);
 
-    const isCCBillPayment = transaction.category === "CC Bill Payment";
+    const isCCBillPayment = transaction.category === "CC Bill Payment" || transaction.type === "transfer";
 
     return (
         <>

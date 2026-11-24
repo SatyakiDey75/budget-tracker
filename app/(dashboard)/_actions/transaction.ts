@@ -49,7 +49,7 @@ export async function CreateTransaction(form: CreateTransactionSchemaType) {
                 category: categoryRow.name,
                 categoryIcon: categoryRow.icon,
                 bankId: bankRow?.id ?? null,
-                bankName: isCash ? "Cash" : (bankRow?.bankName ?? null),
+                bankName: isCash ? "Cash" : (bankRow?.isCredit ? null : (bankRow?.bankName ?? null)),
                 accountName: isCash ? null : (bankRow?.accountName ?? null),
                 merchantName: type === "expense" ? (merchantName || null) : null,
             },
