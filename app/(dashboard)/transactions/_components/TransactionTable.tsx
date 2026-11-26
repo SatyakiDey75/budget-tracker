@@ -276,10 +276,11 @@ export default function TransactionTable({ from, to }: Props) {
     const sourceOptions = useMemo(() => {
         const seen = new Map<string, { value: string; label: string }>();
         history.data?.forEach((transaction) => {
-            if (!transaction.bankName) return;
-            const display = transaction.bankName === "Cash"
-                ? "Cash"
-                : `${transaction.bankName} – ${transaction.accountName}`;
+            if (!transaction.bankName && !transaction.accountName) return;
+            const isCardName = transaction.accountName && isNaN(Number(transaction.accountName));
+            const display = transaction.bankName === "Cash" ? "Cash"
+                : transaction.bankName ? (isCardName ? transaction.accountName! : `${transaction.bankName} – ${transaction.accountName}`)
+                : transaction.accountName ?? "—";
             if (!seen.has(display)) {
                 seen.set(display, { value: display, label: display });
             }
